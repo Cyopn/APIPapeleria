@@ -7,6 +7,6 @@ const Item = sequelize.define('Item', {
     description: { type: DataTypes.STRING, allowNull: true },
     mount: { type: DataTypes.FLOAT, allowNull: false },
     price: { type: DataTypes.FLOAT, allowNull: false },
-})
+});
 
 export default Item;

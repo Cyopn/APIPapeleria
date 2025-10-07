@@ -16,7 +16,6 @@ class UserService {
         if (!user) throw new Error("Usuario no encontrado");
         const valid = await bcrypt.compare(password, user.password);
         if (!valid) throw new Error("Contraseña incorrecta");
-        console.log(env.JWT_SECRET);
         const token = jwt.sign(
             { id: user.id, username: user.username },
             env.JWT_SECRET,

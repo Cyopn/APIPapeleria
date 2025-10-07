@@ -14,6 +14,5 @@ const sequelize = new Sequelize(
             rejectUnauthorized: false
         }
     }
-}
-);
+});
 export default sequelize;

@@ -15,7 +15,7 @@ class ItemService {
             where: {
                 id: id
             }
-        })
+        });
         return { id: itemUpdate.id, name: itemUpdate.name, description: itemUpdate.description, mount: itemUpdate.mount, price: itemUpdate.price };
     }
 
