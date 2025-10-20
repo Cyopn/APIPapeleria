@@ -2,3 +2,27 @@ node_modules
 .env
 package-lock.json
 test.*
+
+# Coverage and nyc
+coverage/
+.nyc_output/
+coverage/lcov-report/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE/editor
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Temporary
+tmp/
+temp/

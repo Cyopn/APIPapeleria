@@ -15,7 +15,10 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node ./src/server.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --detectOpenHandles",
+    "coverage": "nyc --reporter=lcov --reporter=text npm test",
+    "coverage:jest": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --runInBand"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -27,5 +30,10 @@
     "sequelize": "^6.37.7",
     "socket.io": "^4.8.1",
     "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "jest": "^29.6.0",
+    "supertest": "^6.1.6",
+    "nyc": "^15.1.0"
   }
 }
