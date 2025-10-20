@@ -8,7 +8,23 @@ const DetailTransaction = sequelize.define("detail_transaction", {
         primaryKey: true,
         autoIncrement: true,
     },
-    mount: {
+    id_transaction: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: "transaction",
+            key: "id_transaction",
+        },
+    },
+    id_product: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: "product",
+            key: "id_product",
+        },
+    },
+    amount: {
         type: DataTypes.INTEGER,
         allowNull: false,
     },

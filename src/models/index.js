@@ -27,6 +27,36 @@ Print.belongsTo(Product, {
     as: "product"
 });
 
-const db = { sequelize, User, PayamentMethod, Product };
+Transaction.hasMany(DetailTransaction, {
+    foreignKey: "id_transaction",
+    as: "details"
+});
+
+DetailTransaction.belongsTo(Transaction, {
+    foreignKey: "id_transaction",
+    as: "transaction"
+});
+
+Transaction.belongsTo(User, {
+    foreignKey: "id_user",
+    as: "user"
+});
+
+User.hasMany(Transaction, {
+    foreignKey: "id_user",
+    as: "transactions"
+});
+
+DetailTransaction.belongsTo(Product, {
+    foreignKey: "id_product",
+    as: "product"
+});
+
+Product.hasMany(DetailTransaction, {
+    foreignKey: "id_product",
+    as: "detail_transactions"
+});
+
+const db = { sequelize, User, PayamentMethod, Product, Transaction, DetailTransaction };
 
 export default db;

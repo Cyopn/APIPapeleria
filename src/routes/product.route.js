@@ -1,11 +1,13 @@
 import { Router } from 'express';
-import { saveProduct, updateProduct, listProducts } from '../controllers/product.controller.js';
+import { createProduct, listProducts, getProduct, updateProduct, deleteProduct } from '../controllers/product.controller.js';
 import { authMiddleware } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
-router.post('/save', authMiddleware, saveProduct);
-router.put('/update', authMiddleware, updateProduct);
-router.get('/',authMiddleware, listProducts);
+router.post('/', authMiddleware, createProduct);
+router.get('/', authMiddleware, listProducts);
+router.get('/:id', authMiddleware, getProduct);
+router.put('/:id', authMiddleware, updateProduct);
+router.delete('/:id', authMiddleware, deleteProduct);
 
 export default router;

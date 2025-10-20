@@ -18,6 +18,10 @@ const Transaction = sequelize.define("transaction", {
     id_user: {
         type: DataTypes.INTEGER,
         allowNull: true,
+        references: {
+            model: "user",
+            key: "id_user",
+        },
     },
     total: {
         type: DataTypes.FLOAT,

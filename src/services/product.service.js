@@ -3,7 +3,7 @@ import Print from "../models/print.model.js";
 import Item from "../models/item.model.js";
 
 class ProductService {
-    async save({ id, type, description, price, name, mount, type_print, type_paper }) {
+    async create({ id, type, description, price, name, mount, type_print, type_paper }) {
         if (type === "item") {
             const existsItem = await Item.findOne({ where: { name } });
             if (existsItem) throw new Error("Ya existe un producto con el mismo nombre");
@@ -19,24 +19,36 @@ class ProductService {
         }
     }
 
-    async update({ id, type, description, price, name, mount, type_print, type_paper }) {
-        const product = await Product.findByPk(id);
-        if (product === null) throw new Error("El producto no existe")
-        const productUpdate = await Product.update({ name: name, mount: mount, description: description, price: price }, { where: { id_product: id } })
-        if (type === "item") {
-            const itemUpdate = await Item.update({ id_item: productUpdate.id_product, name: name, mount: mount }, { where: { id_item: id } });
-            return { name: itemUpdate.name, mount: itemUpdate.mount, type: productUpdate.type, description: productUpdate.description, price: productUpdate.price }
-        } else {
-            const printUpdate = await Print.update({ type_print: type_print, type_paper: type_paper }, { where: { id_print: id } });
-            return { id_print: productUpdate.id_product, type_print: printUpdate.type_print, type_paper: printUpdate.type_paper, type: productUpdate.type, description: productUpdate.description, price: productUpdate.price }
-        }
-    }
-
-    async listProducts() {
+    async findAll() {
         const prints = await Print.findAll({ attributes: ["id_print", "type_print", "type_paper", "createdAt"] });
         const items = await Item.findAll({ attributes: ["id_item", "name", "mount", "createdAt"] });
         const products = await Product.findAll({ attributes: ["id_product", "type", "description", "price", "createdAt"] });
         return { prints, items, products };
+    }
+
+    async findOne(id) {
+        const product = await Product.findByPk(id);
+        if (!product) throw new Error('Producto no encontrado');
+        return product;
+    }
+
+    async update(id, { type, description, price, name, mount, type_print, type_paper }) {
+        const product = await Product.findByPk(id);
+        if (product === null) throw new Error("El producto no existe")
+        await Product.update({ description: description, price: price }, { where: { id_product: id } })
+        if (type === "item") {
+            await Item.update({ name: name, mount: mount }, { where: { id_item: id } });
+        } else {
+            await Print.update({ type_print: type_print, type_paper: type_paper }, { where: { id_print: id } });
+        }
+        return this.findOne(id);
+    }
+
+    async remove(id) {
+        await Item.destroy({ where: { id_item: id } });
+        await Print.destroy({ where: { id_print: id } });
+        await Product.destroy({ where: { id_product: id } });
+        return { message: 'Producto eliminado' };
     }
 }
 
