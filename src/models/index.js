@@ -2,10 +2,12 @@ import sequelize from "../config/db.js";
 import User from "./user.model.js";
 import Item from "./item.model.js";
 import Print from "./print.model.js";
+import SpecialService from "./sp_service.model.js";
 import PayamentMethod from "./payament_method.model.js";
 import Product from "./product.model.js";
 import Transaction from "./transaction.model.js";
 import DetailTransaction from "./detail_transaction.model.js";
+import File from "./file.model.js";
 
 Product.hasOne(Item, {
     foreignKey: "id_item",
@@ -23,9 +25,19 @@ Product.hasOne(Print, {
 });
 
 Print.belongsTo(Product, {
-    foreignKey: "id_printF",
+    foreignKey: "id_print",
     as: "product"
 });
+
+Product.hasOne(SpecialService, {
+    foreignKey: "id_special_service",
+    as: "special_service"
+});
+
+SpecialService.belongsTo(Product, {
+    foreignKey: "id_special_service",
+    as: "product"
+})
 
 Transaction.hasMany(DetailTransaction, {
     foreignKey: "id_transaction",
@@ -37,14 +49,19 @@ DetailTransaction.belongsTo(Transaction, {
     as: "transaction"
 });
 
+User.hasMany(Transaction, {
+    foreignKey: "id_user",
+    as: "transactions"
+});
+
 Transaction.belongsTo(User, {
     foreignKey: "id_user",
     as: "user"
 });
 
-User.hasMany(Transaction, {
-    foreignKey: "id_user",
-    as: "transactions"
+Product.hasMany(DetailTransaction, {
+    foreignKey: "id_product",
+    as: "detail_transactions"
 });
 
 DetailTransaction.belongsTo(Product, {
@@ -52,10 +69,17 @@ DetailTransaction.belongsTo(Product, {
     as: "product"
 });
 
-Product.hasMany(DetailTransaction, {
-    foreignKey: "id_product",
-    as: "detail_transactions"
+User.hasMany(File, {
+    foreignKey: "id_user",
+    as: "file"
 });
+
+File.belongsTo(User, {
+    foreignKey: "id_user",
+    as: "user"
+});
+
+
 
 const db = { sequelize, User, PayamentMethod, Product, Transaction, DetailTransaction };
 

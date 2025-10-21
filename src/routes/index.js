@@ -4,6 +4,7 @@ import productRoutes from "./product.route.js";
 import paymentMethodRoutes from "./payament_method.route.js";
 import transactionRoutes from "./transaction.route.js";
 
+
 const router = Router();
 
 router.use("/users", userRoutes);
