@@ -1,6 +1,6 @@
-import fileService from "../services/file.service";
+import fileService from "../services/file.service.js";
 
-export const uploadFile = async (req, res, next) => {
+export const createFile = async (req, res, next) => {
     try {
         const file = await fileService.upload(req.body);
         return res.status(201).json(file);
