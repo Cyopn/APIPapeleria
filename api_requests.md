@@ -466,6 +466,284 @@ static async Task<string> DeleteTransactionCSharp(int id) {
 
 ---
 
+## Archivos (/api/files)
+
+Descripción: CRUD de archivos. Todas las rutas requieren autenticación.
+
+### Fetch (JavaScript)
+
+```javascript
+// POST /files
+async function createFile(payload) {
+  const res = await fetch(`${baseUrl}/files`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+// GET /files
+async function listFiles() {
+  const res = await fetch(`${baseUrl}/files`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.json();
+}
+
+// GET /files/:id
+async function getFile(id) {
+  const res = await fetch(`${baseUrl}/files/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.json();
+}
+
+// PUT /files/:id
+async function updateFile(id, payload) {
+  const res = await fetch(`${baseUrl}/files/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+// DELETE /files/:id
+async function deleteFile(id) {
+  const res = await fetch(`${baseUrl}/files/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.json();
+}
+```
+
+### Flutter (Dart)
+
+```dart
+Future<Map<String,dynamic>> createFileDart(String token, Map payload) async {
+  final url = Uri.parse('$baseUrl/files');
+  final res = await http.post(
+    url,
+    headers: {'Content-Type':'application/json', 'Authorization':'Bearer $token'},
+    body: jsonEncode(payload)
+  );
+  return jsonDecode(res.body);
+}
+
+Future<List<dynamic>> listFilesDart(String token) async {
+  final url = Uri.parse('$baseUrl/files');
+  final res = await http.get(
+    url,
+    headers: {'Authorization':'Bearer $token'}
+  );
+  return jsonDecode(res.body);
+}
+
+Future<Map<String,dynamic>> getFileDart(String token, int id) async {
+  final url = Uri.parse('$baseUrl/files/$id');
+  final res = await http.get(
+    url,
+    headers: {'Authorization':'Bearer $token'}
+  );
+  return jsonDecode(res.body);
+}
+
+Future<Map<String,dynamic>> updateFileDart(String token, int id, Map payload) async {
+  final url = Uri.parse('$baseUrl/files/$id');
+  final res = await http.put(
+    url,
+    headers: {'Content-Type':'application/json', 'Authorization':'Bearer $token'},
+    body: jsonEncode(payload)
+  );
+  return jsonDecode(res.body);
+}
+
+Future<Map<String,dynamic>> deleteFileDart(String token, int id) async {
+  final url = Uri.parse('$baseUrl/files/$id');
+  final res = await http.delete(
+    url,
+    headers: {'Authorization':'Bearer $token'}
+  );
+  return jsonDecode(res.body);
+}
+```
+
+### C# (.NET)
+
+```csharp
+static async Task<string> CreateFileCSharp(string token, object payload) {
+  var client = new HttpClient();
+  client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+  var url = "http://localhost:4000/api/files";
+  var json = JsonSerializer.Serialize(payload);
+  var content = new StringContent(json, Encoding.UTF8, "application/json");
+  var res = await client.PostAsync(url, content);
+  return await res.Content.ReadAsStringAsync();
+}
+
+static async Task<string> GetFileCSharp(string token, int id) {
+  var client = new HttpClient();
+  client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+  var url = $"http://localhost:4000/api/files/{id}";
+  var res = await client.GetAsync(url);
+  return await res.Content.ReadAsStringAsync();
+}
+
+static async Task<string> UpdateFileCSharp(string token, int id, object payload) {
+  var client = new HttpClient();
+  client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+  var url = $"http://localhost:4000/api/files/{id}";
+  var json = JsonSerializer.Serialize(payload);
+  var content = new StringContent(json, Encoding.UTF8, "application/json");
+  var res = await client.PutAsync(url, content);
+  return await res.Content.ReadAsStringAsync();
+}
+
+static async Task<string> DeleteFileCSharp(string token, int id) {
+  var client = new HttpClient();
+  client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+  var url = $"http://localhost:4000/api/files/{id}";
+  var res = await client.DeleteAsync(url);
+  return await res.Content.ReadAsStringAsync();
+}
+```
+
+---
+
+## Gestor de Archivos (/api/file_manager)
+
+Descripción: Gestión de archivos incluyendo subida, descarga y listado por usuario o servicio. Todas las rutas requieren autenticación.
+
+### Fetch (JavaScript)
+
+```javascript
+// POST /file_manager (subida de archivos)
+async function uploadFiles(formData) {
+  const res = await fetch(`${baseUrl}/file_manager`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData // FormData con campo 'files' conteniendo hasta 10 archivos
+  });
+  return res.json();
+}
+
+// GET /file_manager/download/:service/:filename
+async function downloadFile(service, filename) {
+  const res = await fetch(`${baseUrl}/file_manager/download/${service}/${filename}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.blob(); // o res.arrayBuffer() según necesidad
+}
+
+// GET /file_manager/user/:usernameOrId
+async function getUserFiles(usernameOrId) {
+  const res = await fetch(`${baseUrl}/file_manager/user/${usernameOrId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.json();
+}
+
+// GET /file_manager/service/:service
+async function getServiceFiles(service) {
+  const res = await fetch(`${baseUrl}/file_manager/service/${service}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.json();
+}
+```
+
+### Flutter (Dart)
+
+```dart
+Future<Map<String,dynamic>> uploadFilesDart(String token, List<File> files) async {
+  final url = Uri.parse('$baseUrl/file_manager');
+  var request = http.MultipartRequest('POST', url)
+    ..headers['Authorization'] = 'Bearer $token';
+  
+  for (var file in files) {
+    request.files.add(await http.MultipartFile.fromPath('files', file.path));
+  }
+  
+  var streamedResponse = await request.send();
+  var response = await http.Response.fromStream(streamedResponse);
+  return jsonDecode(response.body);
+}
+
+Future<Uint8List> downloadFileDart(String token, String service, String filename) async {
+  final url = Uri.parse('$baseUrl/file_manager/download/$service/$filename');
+  final res = await http.get(
+    url,
+    headers: {'Authorization':'Bearer $token'}
+  );
+  return res.bodyBytes;
+}
+
+Future<List<dynamic>> getUserFilesDart(String token, String usernameOrId) async {
+  final url = Uri.parse('$baseUrl/file_manager/user/$usernameOrId');
+  final res = await http.get(
+    url,
+    headers: {'Authorization':'Bearer $token'}
+  );
+  return jsonDecode(res.body);
+}
+
+Future<List<dynamic>> getServiceFilesDart(String token, String service) async {
+  final url = Uri.parse('$baseUrl/file_manager/service/$service');
+  final res = await http.get(
+    url,
+    headers: {'Authorization':'Bearer $token'}
+  );
+  return jsonDecode(res.body);
+}
+```
+
+### C# (.NET)
+
+```csharp
+static async Task<string> UploadFilesCSharp(string token, List<string> filePaths) {
+  var client = new HttpClient();
+  client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+  var url = "http://localhost:4000/api/file_manager";
+  
+  using var content = new MultipartFormDataContent();
+  foreach (var path in filePaths) {
+    var fileContent = new ByteArrayContent(await File.ReadAllBytesAsync(path));
+    content.Add(fileContent, "files", Path.GetFileName(path));
+  }
+  
+  var res = await client.PostAsync(url, content);
+  return await res.Content.ReadAsStringAsync();
+}
+
+static async Task<byte[]> DownloadFileCSharp(string token, string service, string filename) {
+  var client = new HttpClient();
+  client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+  var url = $"http://localhost:4000/api/file_manager/download/{service}/{filename}";
+  var res = await client.GetAsync(url);
+  return await res.Content.ReadAsByteArrayAsync();
+}
+
+static async Task<string> GetUserFilesCSharp(string token, string usernameOrId) {
+  var client = new HttpClient();
+  client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+  var url = $"http://localhost:4000/api/file_manager/user/{usernameOrId}";
+  var res = await client.GetAsync(url);
+  return await res.Content.ReadAsStringAsync();
+}
+
+static async Task<string> GetServiceFilesCSharp(string token, string service) {
+  var client = new HttpClient();
+  client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+  var url = $"http://localhost:4000/api/file_manager/service/{service}";
+  var res = await client.GetAsync(url);
+  return await res.Content.ReadAsStringAsync();
+}
+```
+
+---
+
 ## Notas finales
 
 - Reemplaza `token` por el JWT obtenido desde `/api/users/login`.
