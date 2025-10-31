@@ -3,6 +3,7 @@ node_modules
 package-lock.json
 test.*
 /src/public/*.*
+/src/public/*
 
 # Coverage and nyc
 coverage/

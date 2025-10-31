@@ -25,11 +25,12 @@
         const upload = (file) => {
             const fd = new FormData();
             fd.append("files", file);
-            fetch('http://localhost:4000/api/file_manager/', { // Your POST endpoint
+            fd.append("username", "chip"); // o id del usuario
+            fetch('http://localhost:4000/api/file_manager?service=file', { // Your POST endpoint
                 method: 'POST',
                 headers: {
                     "Accept": "*/*",
-                    "Authorization": "Bearer ",
+                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJjaGlwIiwiaWF0IjoxNzYxODg4ODAxLCJleHAiOjE3NjE4OTI0MDF9.JdTOvMtn_UFKvrC9uv6PAFAXhbSd6shwXPaCHBaOGSI",
                 },
                 body: fd
             }).then(

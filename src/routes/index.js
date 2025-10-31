@@ -4,7 +4,7 @@ import productRoutes from "./product.route.js";
 import paymentMethodRoutes from "./payament_method.route.js";
 import transactionRoutes from "./transaction.route.js";
 import fileRoutes from "./file.route.js";
-import fileManagerService from "../routes/file_manager.route.js";
+import fileManagerRoutes from "../routes/file_manager.route.js";
 
 
 const router = Router();
@@ -13,7 +13,7 @@ router.use("/users", userRoutes);
 router.use("/products", productRoutes);
 router.use("/payment-methods", paymentMethodRoutes);
 router.use("/transactions", transactionRoutes);
-router.use("/files", fileRoutes)
-router.use("/file_manager", fileManagerService)
+router.use("/files", fileRoutes);
+router.use("/file_manager", fileManagerRoutes);
 
 export default router;
