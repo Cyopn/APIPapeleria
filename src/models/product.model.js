@@ -16,6 +16,14 @@ const Product = sequelize.define("product", {
         type: DataTypes.FLOAT,
         allowNull: false,
     },
+    filename: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
+    filehash: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
 }, { tableName: "product", timestamps: true });
 
 export default Product;
