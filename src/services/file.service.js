@@ -10,7 +10,7 @@ class FileService {
     }
 
     async findAll() {
-        return await File.findAll({ attributes: ["if_file", "id_user", "filename", "status", "type", "filehash", "createAt"] })
+        return await File.findAll({ attributes: ["id_file", "id_user", "filename", "status", "type", "filehash", "createdAt"] })
     }
 
     async findOne(id) {

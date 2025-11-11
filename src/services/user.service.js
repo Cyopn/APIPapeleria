@@ -44,7 +44,7 @@ class UserService {
             { id: user.id_user || user.id, username: user.username },
             env.JWT_SECRET,
         );
-        return { token };
+        return { token, user: user.dataValues };
     }
 }
 
