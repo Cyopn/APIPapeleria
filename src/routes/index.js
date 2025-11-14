@@ -5,6 +5,7 @@ import paymentMethodRoutes from "./payament_method.route.js";
 import transactionRoutes from "./transaction.route.js";
 import fileRoutes from "./file.route.js";
 import fileManagerRoutes from "../routes/file_manager.route.js";
+import printingPriceRoutes from "./printing_price.route.js";
 
 
 const router = Router();
@@ -14,6 +15,7 @@ router.use("/products", productRoutes);
 router.use("/payment-methods", paymentMethodRoutes);
 router.use("/transactions", transactionRoutes);
 router.use("/files", fileRoutes);
-router.use("/file_manager", fileManagerRoutes);
+router.use("/file-manager", fileManagerRoutes);
+router.use("/printing-price", printingPriceRoutes);
 
 export default router;

@@ -1,7 +1,6 @@
 import { jest } from '@jest/globals';
 import request from 'supertest';
 
-// Mocks para modelos usados por transactions
 const TransactionMock = {
     create: jest.fn(),
     findAll: jest.fn(),

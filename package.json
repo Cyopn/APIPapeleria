@@ -16,30 +16,29 @@
   "main": "server.js",
   "scripts": {
     "start": "node ./src/server.js",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --detectOpenHandles",
+    "test:unit": "UNIT_TEST=true node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --detectOpenHandles src/tests --testPathIgnorePatterns=src/tests/integration",
+    "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --detectOpenHandles src/tests/integration",
     "coverage": "nyc --reporter=lcov --reporter=text npm test",
-    "coverage:jest": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --runInBand"
+    "coverage:jest": "UNIT_TEST=true node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --runInBand"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
-    "body-parser": "^2.2.0",
+    "canvas": "^3.2.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
-    "mysql2": "^3.15.1",
-    "pdf-lib": "^1.17.1",
-    "pdf2pic": "^3.2.0",
+    "mysql2": "^3.15.3",
+    "pdfjs-dist": "^5.4.394",
+    "puppeteer": "^24.30.0",
     "sequelize": "^6.37.7",
-    "sharp": "^0.34.5",
-    "socket.io": "^4.8.1",
-    "ws": "^8.18.3"
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
-    "jest": "^29.6.0",
-    "nyc": "^15.1.0",
-    "supertest": "^6.1.6"
+    "jest": "^30.2.0",
+    "nyc": "^17.1.0",
+    "supertest": "^7.1.4"
   }
 }
