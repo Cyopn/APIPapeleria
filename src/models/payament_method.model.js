@@ -7,6 +7,6 @@ const PayamentMethod = sequelize.define('payament_method', {
         primaryKey: true, autoIncrement: true
     },
     type: { type: DataTypes.STRING, allowNull: true }
-}, { tableName: 'payament_method', timestamps: true });
+}, { tableName: 'payament_method', timestamps: true, underscored: true });
 
 export default PayamentMethod;

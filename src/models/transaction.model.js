@@ -22,11 +22,14 @@ const Transaction = sequelize.define("transaction", {
             model: "user",
             key: "id_user",
         },
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
     },
     total: {
-        type: DataTypes.FLOAT,
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
+        validate: { min: 0 }
     },
-}, { tableName: "transaction", timestamps: true });
+}, { tableName: "transaction", timestamps: true, underscored: true });
 
 export default Transaction;

@@ -15,6 +15,8 @@ const DetailTransaction = sequelize.define("detail_transaction", {
             model: "transaction",
             key: "id_transaction",
         },
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
     },
     id_product: {
         type: DataTypes.INTEGER,
@@ -23,15 +25,19 @@ const DetailTransaction = sequelize.define("detail_transaction", {
             model: "product",
             key: "id_product",
         },
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
     },
     amount: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        validate: { min: 0 }
     },
     price: {
-        type: DataTypes.FLOAT,
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
+        validate: { min: 0 }
     },
-}, { tableName: "detail_transaction", timestamps: true });
+}, { tableName: "detail_transaction", timestamps: true, underscored: true });
 
 export default DetailTransaction;

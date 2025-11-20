@@ -11,6 +11,8 @@ const File = sequelize.define("file", {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: { model: "user", key: "id_user" },
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
     },
     filename: {
         type: DataTypes.STRING,
@@ -27,8 +29,9 @@ const File = sequelize.define("file", {
     },
     filehash: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
+        unique: true
     }
-}, { tableName: "file", timestamps: true });
+}, { tableName: "file", timestamps: true, underscored: true });
 
 export default File;
