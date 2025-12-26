@@ -22,8 +22,7 @@ class PrintingPriceService {
         const bothSidesArr = Array.isArray(options.bothSides) ? options.bothSides : (typeof options.bothSides !== 'undefined' ? [options.bothSides] : [false, true]);
 
         const PAPER_PRICE = { carta: Number(PRICING.PAPER_PRICE_CARTA), oficio: Number(PRICING.PAPER_PRICE_OFICIO) };
-        const BW_FACTOR = Number(PRICING.BW_FACTOR);
-        const BW_MIN = Number(PRICING.BW_MIN);
+
         const BW_PRICE_PER_PAGE = Number(PRICING.BW_PRICE_PER_PAGE);
         const PREC = Number(PRICING.PRICE_PRECISION) || 4;
 
