@@ -3,6 +3,14 @@ import sharp from 'sharp';
 
 const analyzePdfPages = async (filename) => {
     const TARGET_WIDTH = 1024;
+
+    // Variables de entorno (compatibilidad con nombres antiguos BW_* si existen)
+    const BW_PRICE_PER_PAGE = Number(process.env.BW_PRICE_PER_PAGE ?? 1);
+    const COLOR_FACTOR = Number(process.env.COLOR_FACTOR ?? process.env.BW_FACTOR ?? 0.5); // fracción (0.5 -> 50%) por escalón
+    const COLOR_MIN = Number(process.env.COLOR_MIN ?? process.env.BW_MIN ?? 0.5); // costo extra por escalón
+    const COLOR_BASE_COST = Number(process.env.COLOR_BASE_COST ?? 1); // costo base color antes de incrementos
+    const COLOR_STANDARD_PRICE = Number(process.env.COLOR_STANDARD_PRICE ?? 4); // precio estándar por hoja a color
+
     const analyzePngBuffer = async (pngBuffer) => {
         const { data: raw, info } = await sharp(pngBuffer).raw().toBuffer({ resolveWithObject: true });
         const channels = info.channels || 3;
@@ -19,10 +27,17 @@ const analyzePdfPages = async (filename) => {
             if (!isWhite) colorCount++;
         }
         const colorPercentage = totalPixels === 0 ? 0 : (colorCount / totalPixels) * 100;
-        if (colorPercentage === 0) return 1;
-        const costoBaseColor = 1;
-        const costoColorExtra = 0.5;
-        return costoBaseColor + (Math.ceil(colorPercentage / 50) * costoColorExtra);
+        // Si no hay color, usar precio de blanco y negro desde .env
+        if (colorPercentage === 0) return BW_PRICE_PER_PAGE;
+
+        // Calcular escalones según COLOR_FACTOR (ej. 0.5 -> 50%)
+        const stepPercent = Math.max(0.0001, COLOR_FACTOR) * 100;
+        const steps = Math.ceil(colorPercentage / stepPercent);
+        const calculated = COLOR_BASE_COST + (steps * COLOR_MIN);
+
+        // Aplicar precio estándar a color como mínimo (configurable desde .env),
+        // si el calculado es mayor, usar el calculado.
+        return Math.max(COLOR_STANDARD_PRICE, calculated);
     };
     try {
         try {
@@ -129,7 +144,7 @@ const analyzePdfPages = async (filename) => {
             const addr = server.address();
             const port = typeof addr === 'string' ? parseInt(addr, 10) : (addr && addr.port) || 0;
             const browser = await puppeteer.launch(
-                process.env.PUPPETEER_EXECUTABLE_PATH ?{
+                process.env.PUPPETEER_EXECUTABLE_PATH ? {
                     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
                     args: ['--no-sandbox', '--disable-setuid-sandbox']
                 } : {}
