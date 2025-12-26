@@ -6,8 +6,8 @@ const analyzePdfPages = async (filename) => {
 
     // Variables de entorno (compatibilidad con nombres antiguos BW_* si existen)
     const BW_PRICE_PER_PAGE = Number(process.env.BW_PRICE_PER_PAGE ?? 1);
-    const COLOR_FACTOR = Number(process.env.COLOR_FACTOR ?? process.env.BW_FACTOR ?? 0.5); // fracción (0.5 -> 50%) por escalón
-    const COLOR_MIN = Number(process.env.COLOR_MIN ?? process.env.BW_MIN ?? 0.5); // costo extra por escalón
+    const COLOR_FACTOR = Number(process.env.COLOR_FACTOR ??  0.5); // fracción (0.5 -> 50%) por escalón
+    const COLOR_MIN = Number(process.env.COLOR_MIN ?? 0.5); // costo extra por escalón
     const COLOR_BASE_COST = Number(process.env.COLOR_BASE_COST ?? 1); // costo base color antes de incrementos
     const COLOR_STANDARD_PRICE = Number(process.env.COLOR_STANDARD_PRICE ?? 4); // precio estándar por hoja a color
 
