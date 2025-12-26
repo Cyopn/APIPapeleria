@@ -8,7 +8,8 @@ export default {
     DB_PASSWORD: process.env.DB_PASSWORD || 'password',
     DB_NAME: process.env.DB_NAME || 'database',
     JWT_SECRET: process.env.JWT_SECRET || 'huevo',
-    KEY_SECRET: process.env.KEY_SECRET || 'huevo'
+    KEY_SECRET: process.env.KEY_SECRET || 'huevo',
+    PUPPETEER_EXECUTABLE_PATH: process.env.PUPPETEER_EXECUTABLE_PATH || ''
 }
 
 export const PRICING = {

@@ -128,7 +128,12 @@ const analyzePdfPages = async (filename) => {
             });
             const addr = server.address();
             const port = typeof addr === 'string' ? parseInt(addr, 10) : (addr && addr.port) || 0;
-            const browser = await puppeteer.launch();
+            const browser = await puppeteer.launch(
+                process.env.PUPPETEER_EXECUTABLE_PATH ?{
+                    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+                    args: ['--no-sandbox', '--disable-setuid-sandbox']
+                } : {}
+            );
             const page = await browser.newPage();
             try {
                 page.on('console', msg => {
