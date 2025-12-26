@@ -1,7 +1,7 @@
 import fs from 'fs';
 import sharp from 'sharp';
 
-const printingPrice = async (filename) => {
+const analyzePdfPages = async (filename) => {
     const TARGET_WIDTH = 1024;
     const analyzePngBuffer = async (pngBuffer) => {
         const { data: raw, info } = await sharp(pngBuffer).raw().toBuffer({ resolveWithObject: true });
@@ -79,7 +79,7 @@ const printingPrice = async (filename) => {
                     return analyzePngBuffer(pngBuffer);
                 })
             );
-            return pageCosts.reduce((a, b) => a + b, 0);
+            return pageCosts;
         } finally {
             try { if (typeof __orig_console_warn === 'function') console.warn = __orig_console_warn; } catch (e) { }
         }
@@ -90,7 +90,6 @@ const printingPrice = async (filename) => {
             const url = await import('url');
             const server = http.createServer((req, res) => {
                 const parsed = url.parse(req.url || '', true);
-                console.log('[printingPrice] temp-server request:', req.method, req.url);
                 res.setHeader('Access-Control-Allow-Origin', '*');
                 res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
                 res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -218,12 +217,18 @@ const printingPrice = async (filename) => {
                 const buf = Buffer.from(b64, 'base64');
                 pageCosts.push(await analyzePngBuffer(buf));
             }
-            return pageCosts.reduce((a, b) => a + b, 0);
+            return pageCosts;
         } catch (puppErr) {
             console.error('printingPrice - both pdfjs/node-canvas and puppeteer fallbacks failed:', nodeErr, puppErr);
             throw puppErr;
         }
     };
-}
+};
 
+const printingPrice = async (filename) => {
+    const pageCosts = await analyzePdfPages(filename);
+    return Array.isArray(pageCosts) ? pageCosts.reduce((a, b) => a + b, 0) : pageCosts;
+};
+
+export { analyzePdfPages };
 export default printingPrice;

@@ -4,16 +4,16 @@ import env from "../config/env.js";
 import User from "../models/user.model.js";
 
 class UserService {
-    async create({ username, names, lastnames, email, password, role }) {
+    async create({ username, names, lastnames, email, password, role, phone }) {
         const exists = await User.findOne({ where: { username } });
         if (exists) throw new Error("Usuario ya existe");
         const hashed = await bcrypt.hash(password, 10);
-        const user = await User.create({ username: username, names: names, lastnames: lastnames, email: email, password: hashed, role: role });
-        return { id: user.id_user || user.id, username: user.username, names: user.names, lastnames: user.lastnames, email: user.email, role: user.role };
+        const user = await User.create({ username: username, names: names, lastnames: lastnames, email: email, password: hashed, role: role, phone });
+        return { id: user.id_user || user.id, username: user.username, names: user.names, lastnames: user.lastnames, email: user.email, role: user.role, phone: user.phone };
     }
 
     async findAll() {
-        return await User.findAll({ attributes: ["id_user", "username", "createdAt"] });
+        return await User.findAll({ attributes: ["id_user", "username", "createdAt", "phone"] });
     }
 
     async findOne(id) {
@@ -22,11 +22,11 @@ class UserService {
         return user;
     }
 
-    async update(id, { username, names, lastnames, email, password, role }) {
+    async update(id, { username, names, lastnames, email, password, role, phone }) {
         const user = await User.findByPk(id);
         if (!user) throw new Error("Usuario no encontrado");
         const hashed = password ? await bcrypt.hash(password, 10) : user.password;
-        await User.update({ username, names, lastnames, email, password: hashed, role }, { where: { id_user: id } });
+        await User.update({ username, names, lastnames, email, password: hashed, role, phone }, { where: { id_user: id } });
         return this.findOne(id);
     }
 

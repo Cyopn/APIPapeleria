@@ -8,7 +8,6 @@ class TransactionService {
         const t = await sequelize.transaction();
 
         try {
-            // Crear la transacción
             const transaction = await Transaction.create({
                 type,
                 date,
@@ -16,7 +15,6 @@ class TransactionService {
                 total: details.reduce((sum, detail) => sum + (detail.price * detail.amount), 0)
             }, { transaction: t });
 
-            // Crear los detalles de la transacción
             const detailPromises = details.map(detail =>
                 DetailTransaction.create({
                     id_transaction: transaction.id_transaction,
@@ -77,7 +75,6 @@ class TransactionService {
                 throw new Error('Transacción no encontrada');
             }
 
-            // Actualizar la transacción principal
             await transaction.update({
                 type,
                 date,
@@ -85,13 +82,11 @@ class TransactionService {
                 total: details.reduce((sum, detail) => sum + (detail.price * detail.amount), 0)
             }, { transaction: t });
 
-            // Eliminar detalles antiguos
             await DetailTransaction.destroy({
                 where: { id_transaction: id },
                 transaction: t
             });
 
-            // Crear nuevos detalles
             const detailPromises = details.map(detail =>
                 DetailTransaction.create({
                     id_transaction: id,
@@ -120,13 +115,11 @@ class TransactionService {
                 throw new Error('Transacción no encontrada');
             }
 
-            // Eliminar detalles primero
             await DetailTransaction.destroy({
                 where: { id_transaction: id },
                 transaction: t
             });
 
-            // Eliminar la transacción
             await transaction.destroy({ transaction: t });
             await t.commit();
 
