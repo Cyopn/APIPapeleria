@@ -1,104 +1,45 @@
 import printingPrice, { analyzePdfPages } from '../utils/printing_price.js';
 import fileManagerService from './file_manager.service.js';
-import env, { PRICING } from '../config/env.js';
+import { PRICING } from '../config/env.js'
 
 class PrintingPriceService {
-    async calculateFromStoredFile(filename, service = 'general') {
+    async calculateFromStoredFile(filename, service) {
         if (!filename) throw new Error('filename requerido');
         const filePath = await fileManagerService.getFilePath(service, filename);
         const price = await printingPrice(filePath);
         return price;
     }
 
-    async calculateCombinationsFromStoredFile(filename, options = {}, service = 'general') {
-        if (!filename) throw new Error('filename requerido');
-        const filePath = await fileManagerService.getFilePath(service, filename);
-        const pageCosts = await analyzePdfPages(filePath);
-        if (!Array.isArray(pageCosts) || pageCosts.length === 0) return [];
-
-        const colorModes = Array.isArray(options.colorModes) ? options.colorModes : (options.colorModes ? [options.colorModes] : ['bw', 'color']);
-        const paperSizes = Array.isArray(options.paperSizes) ? options.paperSizes : (options.paperSizes ? [options.paperSizes] : ['carta', 'oficio']);
-        const ranges = Array.isArray(options.ranges) ? options.ranges : (options.ranges ? [options.ranges] : ['all']);
-        const bothSidesArr = Array.isArray(options.bothSides) ? options.bothSides : (typeof options.bothSides !== 'undefined' ? [options.bothSides] : [false, true]);
-
-        const PAPER_PRICE = { carta: Number(PRICING.PAPER_PRICE_CARTA), oficio: Number(PRICING.PAPER_PRICE_OFICIO) };
-
-        const BW_PRICE_PER_PAGE = Number(PRICING.BW_PRICE_PER_PAGE);
-        const PREC = Number(PRICING.PRICE_PRECISION) || 4;
-
-        const results = [];
-
-        const totalPages = pageCosts.length;
-
-        const pagesFromRange = (r) => {
-            if (!r || r === 'all') return { start: 1, end: totalPages };
-            const m = String(r).split('-').map(s => parseInt(s, 10));
-            if (m.length === 2 && !isNaN(m[0]) && !isNaN(m[1])) return { start: Math.max(1, m[0]), end: Math.min(totalPages, m[1]) };
-            const p = parseInt(r, 10);
-            if (!isNaN(p)) return { start: p, end: p };
-            return { start: 1, end: totalPages };
-        };
-
-        const sets = Number(options.sets || options.quantity || options.copies || 1) || 1;
-
-        for (const colorMode of colorModes) {
-            for (const paperSize of paperSizes) {
-                for (const bothSides of bothSidesArr) {
-                    for (const range of ranges) {
-                        const { start, end } = pagesFromRange(range);
-                        const pagesIndex = [];
-                        for (let p = start; p <= end; p++) pagesIndex.push(p - 1);
-
-                        const numPages = pagesIndex.length;
-
-                        let inkCost = 0;
-                        if (colorMode === 'color') {
-                            const inkPerPage = pagesIndex.map(i => pageCosts[i] || 1);
-                            inkCost = inkPerPage.reduce((a, b) => a + b, 0);
-                        } else {
-                            inkCost = numPages * BW_PRICE_PER_PAGE;
-                        }
-                        const sheets = bothSides ? Math.ceil(numPages / 2) : numPages;
-                        const paperCost = (PAPER_PRICE[paperSize] || PAPER_PRICE.carta) * sheets;
-
-                        const totalPerSet = Number((inkCost + paperCost).toFixed(PREC));
-                        const totalPrice = Number((totalPerSet * sets).toFixed(PREC));
-
-                        results.push({
-                            colorMode,
-                            paperSize,
-                            bothSides,
-                            range: String(range),
-                            pages: numPages,
-                            sheets,
-                            sets,
-                            pricePerSet: totalPerSet,
-                            totalPrice,
-                            breakdownPerSet: { inkCost: Number(inkCost.toFixed(PREC)), paperCost: Number(paperCost.toFixed(PREC)) },
-                            breakdownTotal: { inkCost: Number((inkCost * sets).toFixed(PREC)), paperCost: Number((paperCost * sets).toFixed(PREC)) }
-                        });
-                    }
-                }
-            }
-        }
-
-        return results;
-    }
-
-    async calculateSingleFromStoredFile(filename, options = {}, service = 'general') {
+    async calculateSingleFromStoredFile(filename, options = {}, service) {
         if (!filename) throw new Error('filename requerido');
         const filePath = await fileManagerService.getFilePath(service, filename);
         const pageCosts = await analyzePdfPages(filePath);
         if (!Array.isArray(pageCosts) || pageCosts.length === 0) return { price: 0, breakdown: {} };
 
-        const colorMode = Array.isArray(options.colorModes) ? options.colorModes[0] : (options.colorModes || 'bw');
-        const paperSize = Array.isArray(options.paperSizes) ? options.paperSizes[0] : (options.paperSizes || 'carta');
-        const range = Array.isArray(options.ranges) ? options.ranges[0] : (options.ranges || 'all');
-        const bothSides = Array.isArray(options.bothSides) ? options.bothSides[0] : (typeof options.bothSides !== 'undefined' ? options.bothSides : false);
+        const colorMode = options.colorModes;
+        const paperSize = options.paperSizes;
+        const range = options.ranges;
+        const bothSides = options.bothSides;
+        const calcType = options.type;
+        const coverType = options.coverType;
+        const bindingType = options.bindingType;
+
+        const missing = [];
+        if (colorMode === undefined || colorMode === null || colorMode === '') missing.push('colorModes');
+        if (paperSize === undefined || paperSize === null || paperSize === '') missing.push('paperSizes');
+        if (range === undefined || range === null || range === '') missing.push('ranges');
+        if (bothSides === undefined || bothSides === null) missing.push('bothSides');
+        if (calcType === 'bound') {
+            if (coverType === undefined || coverType === null || coverType === '') missing.push('coverType');
+            if (bindingType === undefined || bindingType === null || bindingType === '') missing.push('bindingType');
+        }
+        if (missing.length > 0) {
+            const err = new Error('Faltan campos: ' + missing.join(', '));
+            err.status = 400;
+            throw err;
+        }
 
         const PAPER_PRICE = { carta: Number(PRICING.PAPER_PRICE_CARTA), oficio: Number(PRICING.PAPER_PRICE_OFICIO) };
-        const BW_FACTOR = Number(PRICING.BW_FACTOR);
-        const BW_MIN = Number(PRICING.BW_MIN);
         const BW_PRICE_PER_PAGE = Number(PRICING.BW_PRICE_PER_PAGE);
         const PREC = Number(PRICING.PRICE_PRECISION) || 4;
         const totalPages = pageCosts.length;
@@ -126,14 +67,49 @@ class PrintingPriceService {
         }
         const sheets = bothSides ? Math.ceil(numPages / 2) : numPages;
         const paperCost = (PAPER_PRICE[paperSize] || PAPER_PRICE.carta) * sheets;
-        const totalPerSet = Number((inkCost + paperCost).toFixed(PREC));
+
+        let bindingCostPerSet = 0;
+        let bindingBreakdown = {};
+        if (calcType === 'bound') {
+            const COVER_PRICE_DURA = Number(PRICING.COVER_PRICE_DURA) || Number(PRICING.COVER_PRICE_HARD) || 10;
+            const COVER_PRICE_BLANDA = Number(PRICING.COVER_PRICE_BLANDA) || Number(PRICING.COVER_PRICE_SOFT) || 5;
+            const BINDING_PRICE_ESPIRAL = Number(PRICING.BINDING_PRICE_ESPIRAL) || Number(PRICING.BINDING_PRICE_SPIRAL) || 3;
+            const BINDING_PRICE_ENCOLADA = Number(PRICING.BINDING_PRICE_ENCOLADA) || Number(PRICING.BINDING_PRICE_GLUE) || 4;
+
+            const coverCost = (String(coverType).toLowerCase().includes('dura') || String(coverType).toLowerCase().includes('dura')) ? COVER_PRICE_DURA : COVER_PRICE_BLANDA;
+            const bindMethodCost = String(bindingType).toLowerCase().includes('espiral') ? BINDING_PRICE_ESPIRAL : BINDING_PRICE_ENCOLADA;
+
+            bindingCostPerSet = coverCost + bindMethodCost;
+            bindingBreakdown = { coverType, bindingType, coverCost: Number(coverCost.toFixed ? coverCost.toFixed(PREC) : coverCost), bindingMethodCost: Number(bindMethodCost.toFixed ? bindMethodCost.toFixed(PREC) : bindMethodCost) };
+        }
+
+        const totalPerSet = Number((inkCost + paperCost + bindingCostPerSet).toFixed(PREC));
         const totalPrice = Number((totalPerSet * sets).toFixed(PREC));
+
+        const coverCostPerSet = calcType === 'bound' ? Number(bindingBreakdown.coverCost || 0) : 0;
+        const bindingMethodCostPerSet = calcType === 'bound' ? Number(bindingBreakdown.bindingMethodCost || 0) : 0;
+
+        const breakdownPerSet = {
+            inkCost: Number(inkCost.toFixed(PREC)),
+            paperCost: Number(paperCost.toFixed(PREC))
+        };
+        const breakdownTotal = {
+            inkCost: Number((inkCost * sets).toFixed(PREC)),
+            paperCost: Number((paperCost * sets).toFixed(PREC))
+        };
+
+        if (calcType === 'bound') {
+            breakdownPerSet.coverCost = Number(coverCostPerSet.toFixed ? coverCostPerSet.toFixed(PREC) : coverCostPerSet);
+            breakdownPerSet.bindingCost = Number(bindingMethodCostPerSet.toFixed ? bindingMethodCostPerSet.toFixed(PREC) : bindingMethodCostPerSet);
+            breakdownTotal.coverCost = Number((coverCostPerSet * sets).toFixed(PREC));
+            breakdownTotal.bindingCost = Number((bindingMethodCostPerSet * sets).toFixed(PREC));
+        }
 
         return {
             pricePerSet: totalPerSet,
             totalPrice,
-            breakdownPerSet: { inkCost: Number(inkCost.toFixed(PREC)), paperCost: Number(paperCost.toFixed(PREC)) },
-            breakdownTotal: { inkCost: Number((inkCost * sets).toFixed(PREC)), paperCost: Number((paperCost * sets).toFixed(PREC)) },
+            breakdownPerSet,
+            breakdownTotal,
             pages: numPages,
             sheets,
             sets
