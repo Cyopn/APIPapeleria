@@ -24,6 +24,7 @@ class PrintingPriceService {
         const coverType = options.coverType;
         const bindingType = options.bindingType;
         const ringType = options.ringType;
+        const documentType = options.documentType;
 
         const missing = [];
         if (colorMode === undefined || colorMode === null || colorMode === '') missing.push('colorModes');
@@ -36,6 +37,9 @@ class PrintingPriceService {
         }
         if (calcType === 'spiral') {
             if (ringType === undefined || ringType === null || ringType === '') missing.push('ringType');
+        }
+        if (calcType === 'docs') {
+            if (documentType === undefined || documentType === null || documentType === '') missing.push('documentType');
         }
         if (missing.length > 0) {
             const err = new Error('Faltan campos: ' + missing.join(', '));
@@ -93,8 +97,20 @@ class PrintingPriceService {
             bindingCostPerSet = ringCost;
             bindingBreakdown = { ringType, ringCost: Number(ringCost.toFixed ? ringCost.toFixed(PREC) : ringCost) };
         }
+        if (calcType === 'docs') {
+            const DOC_PRICE_TESIS = Number(PRICING.DOC_PRICE_TESIS);
+            const DOC_PRICE_EXAMEN = Number(PRICING.DOC_PRICE_EXAMEN);
+            const DOC_PRICE_REPORTE = Number(PRICING.DOC_PRICE_REPORTE);
+            const DOC_PRICE_OTRO = Number(PRICING.DOC_PRICE_OTRO);
+            const dt = String(documentType).toLowerCase();
+            let chosen = DOC_PRICE_OTRO;
+            if (dt.includes('tesis')) chosen = DOC_PRICE_TESIS;
+            else if (dt.includes('examen')) chosen = DOC_PRICE_EXAMEN;
+            else if (dt.includes('reporte')) chosen = DOC_PRICE_REPORTE;
+            var docsCostPerSet = chosen;
+        }
 
-        const totalPerSet = Number((inkCost + paperCost + bindingCostPerSet).toFixed(PREC));
+        const totalPerSet = Number((inkCost + paperCost + bindingCostPerSet + (typeof docsCostPerSet !== 'undefined' ? docsCostPerSet : 0)).toFixed(PREC));
         const totalPrice = Number((totalPerSet * sets).toFixed(PREC));
 
         const coverCostPerSet = calcType === 'bound' ? Number(bindingBreakdown.coverCost || 0) : 0;
@@ -119,6 +135,11 @@ class PrintingPriceService {
         if (calcType === 'spiral') {
             breakdownPerSet.ringCost = Number(spiralRingCostPerSet.toFixed ? spiralRingCostPerSet.toFixed(PREC) : spiralRingCostPerSet);
             breakdownTotal.ringCost = Number((spiralRingCostPerSet * sets).toFixed(PREC));
+        }
+        if (calcType === 'docs') {
+            const docsVal = (typeof docsCostPerSet !== 'undefined') ? docsCostPerSet : 0;
+            breakdownPerSet.docsCost = Number(docsVal.toFixed ? docsVal.toFixed(PREC) : docsVal);
+            breakdownTotal.docsCost = Number((docsVal * sets).toFixed(PREC));
         }
 
         return {

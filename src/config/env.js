@@ -30,5 +30,9 @@ export const PRICING = {
     BINDING_PRICE_PLASTIC: parseFloat(process.env.BINDING_PRICE_PLASTIC),
     BINDING_PRICE_METAL: parseFloat(process.env.BINDING_PRICE_METAL),
     BINDING_PRICE_GLUE: parseFloat(process.env.BINDING_PRICE_GLUE),
+    DOC_PRICE_TESIS: parseFloat(process.env.DOC_PRICE_TESIS),
+    DOC_PRICE_EXAMEN: parseFloat(process.env.DOC_PRICE_EXAMEN),
+    DOC_PRICE_REPORTE: parseFloat(process.env.DOC_PRICE_REPORTE),
+    DOC_PRICE_OTRO: parseFloat(process.env.DOC_PRICE_OTRO),
     PRICE_PRECISION: parseInt(process.env.PRICE_PRECISION, 10)
 };
