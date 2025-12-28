@@ -23,6 +23,7 @@ class PrintingPriceService {
         const calcType = options.type;
         const coverType = options.coverType;
         const bindingType = options.bindingType;
+        const ringType = options.ringType;
 
         const missing = [];
         if (colorMode === undefined || colorMode === null || colorMode === '') missing.push('colorModes');
@@ -32,6 +33,9 @@ class PrintingPriceService {
         if (calcType === 'bound') {
             if (coverType === undefined || coverType === null || coverType === '') missing.push('coverType');
             if (bindingType === undefined || bindingType === null || bindingType === '') missing.push('bindingType');
+        }
+        if (calcType === 'spiral') {
+            if (ringType === undefined || ringType === null || ringType === '') missing.push('ringType');
         }
         if (missing.length > 0) {
             const err = new Error('Faltan campos: ' + missing.join(', '));
@@ -82,12 +86,20 @@ class PrintingPriceService {
             bindingCostPerSet = coverCost + bindMethodCost;
             bindingBreakdown = { coverType, bindingType, coverCost: Number(coverCost.toFixed ? coverCost.toFixed(PREC) : coverCost), bindingMethodCost: Number(bindMethodCost.toFixed ? bindMethodCost.toFixed(PREC) : bindMethodCost) };
         }
+        if (calcType === 'spiral') {
+            const BINDING_PRICE_PLASTIC = Number(PRICING.BINDING_PRICE_PLASTIC) || Number(PRICING.BINDING_PRICE_SPIRAL) || 2;
+            const BINDING_PRICE_METAL = Number(PRICING.BINDING_PRICE_METAL) || Number(PRICING.BINDING_PRICE_SPIRAL) || 5;
+            const ringCost = String(ringType).toLowerCase().includes('metal') ? BINDING_PRICE_METAL : BINDING_PRICE_PLASTIC;
+            bindingCostPerSet = ringCost;
+            bindingBreakdown = { ringType, ringCost: Number(ringCost.toFixed ? ringCost.toFixed(PREC) : ringCost) };
+        }
 
         const totalPerSet = Number((inkCost + paperCost + bindingCostPerSet).toFixed(PREC));
         const totalPrice = Number((totalPerSet * sets).toFixed(PREC));
 
         const coverCostPerSet = calcType === 'bound' ? Number(bindingBreakdown.coverCost || 0) : 0;
         const bindingMethodCostPerSet = calcType === 'bound' ? Number(bindingBreakdown.bindingMethodCost || 0) : 0;
+        const spiralRingCostPerSet = calcType === 'spiral' ? Number(bindingBreakdown.ringCost || 0) : 0;
 
         const breakdownPerSet = {
             inkCost: Number(inkCost.toFixed(PREC)),
@@ -103,6 +115,10 @@ class PrintingPriceService {
             breakdownPerSet.bindingCost = Number(bindingMethodCostPerSet.toFixed ? bindingMethodCostPerSet.toFixed(PREC) : bindingMethodCostPerSet);
             breakdownTotal.coverCost = Number((coverCostPerSet * sets).toFixed(PREC));
             breakdownTotal.bindingCost = Number((bindingMethodCostPerSet * sets).toFixed(PREC));
+        }
+        if (calcType === 'spiral') {
+            breakdownPerSet.ringCost = Number(spiralRingCostPerSet.toFixed ? spiralRingCostPerSet.toFixed(PREC) : spiralRingCostPerSet);
+            breakdownTotal.ringCost = Number((spiralRingCostPerSet * sets).toFixed(PREC));
         }
 
         return {
