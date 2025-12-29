@@ -18,6 +18,7 @@ class PrintingPriceService {
 
         const colorMode = options.colorModes;
         const paperSize = options.paperSizes;
+        const paperType = options.paperType;
         const range = options.ranges;
         const bothSides = options.bothSides;
         const calcType = options.type;
@@ -28,9 +29,11 @@ class PrintingPriceService {
 
         const missing = [];
         if (colorMode === undefined || colorMode === null || colorMode === '') missing.push('colorModes');
-        if (paperSize === undefined || paperSize === null || paperSize === '') missing.push('paperSizes');
-        if (range === undefined || range === null || range === '') missing.push('ranges');
-        if (bothSides === undefined || bothSides === null) missing.push('bothSides');
+        if (calcType !== 'photo') {
+            if (paperSize === undefined || paperSize === null || paperSize === '') missing.push('paperSizes');
+            if (range === undefined || range === null || range === '') missing.push('ranges');
+            if (bothSides === undefined || bothSides === null) missing.push('bothSides');
+        }
         if (calcType === 'bound') {
             if (coverType === undefined || coverType === null || coverType === '') missing.push('coverType');
             if (bindingType === undefined || bindingType === null || bindingType === '') missing.push('bindingType');
@@ -74,7 +77,7 @@ class PrintingPriceService {
             inkCost = numPages * BW_PRICE_PER_PAGE;
         }
         const sheets = bothSides ? Math.ceil(numPages / 2) : numPages;
-        const paperCost = (PAPER_PRICE[paperSize] || PAPER_PRICE.carta) * sheets;
+        let paperCost = (PAPER_PRICE[paperSize] || PAPER_PRICE.carta) * sheets;
 
         let bindingCostPerSet = 0;
         let bindingBreakdown = {};
@@ -97,6 +100,18 @@ class PrintingPriceService {
             bindingCostPerSet = ringCost;
             bindingBreakdown = { ringType, ringCost: Number(ringCost.toFixed ? ringCost.toFixed(PREC) : ringCost) };
         }
+        if (calcType === 'photo') {
+            const PHOTO_PAPER_BRILLO = Number(PRICING.PHOTO_PAPER_BRILLO);
+            const PHOTO_PAPER_MATE = Number(PRICING.PHOTO_PAPER_MATE);
+            const PHOTO_PAPER_SATIN = Number(PRICING.PHOTO_PAPER_SATIN);
+            const pt = String(paperType || '').toLowerCase();
+            let perSheet = PHOTO_PAPER_BRILLO;
+            if (pt.includes('mate')) perSheet = PHOTO_PAPER_MATE;
+            else if (pt.includes('satin') || pt.includes('satinado')) perSheet = PHOTO_PAPER_SATIN;
+            const photoPaperCost = perSheet * sheets;
+            paperCost = photoPaperCost;
+            bindingBreakdown.photo = { paperType, photoPaperCost: Number(photoPaperCost.toFixed ? photoPaperCost.toFixed(PREC) : photoPaperCost) };
+        }
         if (calcType === 'docs') {
             const DOC_PRICE_TESIS = Number(PRICING.DOC_PRICE_TESIS);
             const DOC_PRICE_EXAMEN = Number(PRICING.DOC_PRICE_EXAMEN);
@@ -116,6 +131,7 @@ class PrintingPriceService {
         const coverCostPerSet = calcType === 'bound' ? Number(bindingBreakdown.coverCost || 0) : 0;
         const bindingMethodCostPerSet = calcType === 'bound' ? Number(bindingBreakdown.bindingMethodCost || 0) : 0;
         const spiralRingCostPerSet = calcType === 'spiral' ? Number(bindingBreakdown.ringCost || 0) : 0;
+        const photoPaperCostPerSet = calcType === 'photo' ? Number((bindingBreakdown.photo && bindingBreakdown.photo.photoPaperCost) || 0) : 0;
 
         const breakdownPerSet = {
             inkCost: Number(inkCost.toFixed(PREC)),
@@ -140,6 +156,12 @@ class PrintingPriceService {
             const docsVal = (typeof docsCostPerSet !== 'undefined') ? docsCostPerSet : 0;
             breakdownPerSet.docsCost = Number(docsVal.toFixed ? docsVal.toFixed(PREC) : docsVal);
             breakdownTotal.docsCost = Number((docsVal * sets).toFixed(PREC));
+        }
+        if (calcType === 'photo') {
+            const photoVal = photoPaperCostPerSet;
+            breakdownPerSet.photoPaperType = paperType;
+            breakdownPerSet.photoPaperCost = Number(photoVal.toFixed ? photoVal.toFixed(PREC) : photoVal);
+            breakdownTotal.photoPaperCost = Number((photoVal * sets).toFixed(PREC));
         }
 
         return {
