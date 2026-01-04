@@ -11,7 +11,7 @@ import DetailTransaction from "../models/detail_transaction.model.js";
 import sequelize from "../config/db.js";
 
 class ProductService {
-    async create({ type, description, price, filename, filehash, id_file = null, amount = 0, name, type_print, type_paper, paper_size, range, both_sides, print_amount, observations, mode, service_type, cover_type, cover_color, spiral_type, document_type, binding_type }) {
+    async create({ type, description, price, filename, filehash, id_file = null, amount = 0, name, type_print, type_paper, paper_size, range, both_sides, print_amount, observations, status, mode, service_type, cover_type, cover_color, spiral_type, document_type, binding_type }) {
         const t = await sequelize.transaction();
         try {
             if ((filename || filehash) && !id_file) {
@@ -29,9 +29,9 @@ class ProductService {
                 const existsPrint = await Print.findOne({ where: { print_type: type_print }, transaction: t });
                 if (existsPrint) throw new Error("Ya existe una impresion con el mismo tipo");
                 const product = await Product.create({ type: type, description: description, price: price, id_file, amount }, { transaction: t });
-                const print = await Print.create({ id_print: product.id_product, print_type: type_print, paper_type: type_paper }, { transaction: t });
+                const print = await Print.create({ id_print: product.id_product, print_type: type_print, paper_type: type_paper, status: typeof status !== 'undefined' ? status : undefined }, { transaction: t });
                 await t.commit();
-                return { id_item: product.id_product, type_print: print.print_type, type_paper: print.paper_type, type: product.type, description: product.description, price: product.price }
+                return { id_item: product.id_product, type_print: print.print_type, type_paper: print.paper_type, status: print.status, type: product.type, description: product.description, price: product.price }
             } else {
                 const product = await Product.create({ type: type, description: description, price: price, id_file, amount }, { transaction: t });
                 const sp_services = await SpecialService.create({ id_special_service: product.id_product, type: service_type, mode: mode }, { transaction: t });
@@ -40,7 +40,7 @@ class ProductService {
                     if (!linkedPrintId) {
                         if (!type_print || !type_paper) throw new Error("Faltan datos de impresión para crear el print asociado (type_print, type_paper)");
                         const printProduct = await Product.create({ type: 'print', description: `Print for special_service ${product.id_product}`, price: 0, id_file: null, amount: 0 }, { transaction: t });
-                        await Print.create({ id_print: printProduct.id_product, print_type: type_print, paper_type: type_paper, paper_size: (typeof paper_size !== 'undefined' ? paper_size : null), range: (typeof range !== 'undefined' ? range : null), both_sides: (typeof both_sides !== 'undefined' ? both_sides : false), amount: (typeof print_amount !== 'undefined' ? print_amount : 0), observations: (typeof observations !== 'undefined' ? observations : null) }, { transaction: t });
+                        await Print.create({ id_print: printProduct.id_product, print_type: type_print, paper_type: type_paper, paper_size: (typeof paper_size !== 'undefined' ? paper_size : null), range: (typeof range !== 'undefined' ? range : null), both_sides: (typeof both_sides !== 'undefined' ? both_sides : false), amount: (typeof print_amount !== 'undefined' ? print_amount : 0), observations: (typeof observations !== 'undefined' ? observations : null), status: typeof status !== 'undefined' ? status : undefined }, { transaction: t });
                         linkedPrintId = printProduct.id_product;
                     }
                     await SpecialServiceData.create({ id_special_service_data: product.id_product, id_print: linkedPrintId }, { transaction: t });
@@ -137,6 +137,7 @@ class ProductService {
                 if (typeof payload.both_sides !== 'undefined') printUpdates.both_sides = payload.both_sides;
                 if (typeof payload.print_amount !== 'undefined') printUpdates.amount = payload.print_amount;
                 if (typeof payload.observations !== 'undefined') printUpdates.observations = payload.observations;
+                if (typeof payload.status !== 'undefined') printUpdates.status = payload.status;
                 if (Object.keys(printUpdates).length) await Print.update(printUpdates, { where: { id_print: id }, transaction: t });
             } else if (prodType === 'special_service') {
                 const ssUpdates = {};

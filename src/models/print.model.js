@@ -16,6 +16,11 @@ const Print = sequelize.define("print", {
     both_sides: { type: DataTypes.BOOLEAN, allowNull: false },
     amount: { type: DataTypes.INTEGER, allowNull: false, validate: { min: 0 } },
     observations: { type: DataTypes.TEXT, allowNull: true },
+    status: {
+        type: DataTypes.ENUM("pending", "in_progress", "completed"),
+        allowNull: false,
+        defaultValue: "pending",
+    }
 }, { tableName: "print", timestamps: true, underscored: true });
 
 export default Print;

@@ -30,6 +30,15 @@ const Transaction = sequelize.define("transaction", {
         allowNull: false,
         validate: { min: 0 }
     },
+    status: {
+        type: DataTypes.ENUM("pending", "completed"),
+        allowNull: false,
+        defaultValue: "pending",
+    },
+    payament_method: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    }
 }, { tableName: "transaction", timestamps: true, underscored: true });
 
 export default Transaction;

@@ -7,7 +7,6 @@ import SpecialServiceData from "./sp_service.data.model.js";
 import SpecialServiceBound from "./sp_service.bound.model.js";
 import SpecialServiceSpiral from "./sp_service.spiral.model.js";
 import SpecialServiceDocument from "./sp_service.document.model.js";
-import PayamentMethod from "./payament_method.model.js";
 import Product from "./product.model.js";
 import Transaction from "./transaction.model.js";
 import DetailTransaction from "./detail_transaction.model.js";
@@ -132,7 +131,6 @@ Product.belongsTo(File, {
 const db = {
     sequelize,
     User,
-    PayamentMethod,
     Product,
     Item,
     Print,
