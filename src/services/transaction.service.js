@@ -1,10 +1,10 @@
-import Transaction from '../models/transaction.model.js';
+﻿import Transaction from '../models/transaction.model.js';
 import DetailTransaction from '../models/detail_transaction.model.js';
 import Product from '../models/product.model.js';
 import sequelize from '../config/db.js';
 
 class TransactionService {
-    async create({ type, date, id_user, details, status, payament_method }) {
+    async create({ type, date, id_user, details, status, payment_method }) {
         const t = await sequelize.transaction();
 
         try {
@@ -14,7 +14,7 @@ class TransactionService {
                 id_user,
                 total: details.reduce((sum, detail) => sum + (detail.price * detail.amount), 0),
                 status: typeof status !== 'undefined' ? status : undefined,
-                payament_method: typeof payament_method !== 'undefined' ? payament_method : undefined
+                payament_method: typeof payment_method !== 'undefined' ? payment_method : undefined
             }, { transaction: t });
 
             const detailPromises = details.map(detail =>
@@ -68,7 +68,7 @@ class TransactionService {
         return transaction;
     }
 
-    async update(id, { type, date, id_user, details, status, payament_method }) {
+    async update(id, { type, date, id_user, details, status, payment_method }) {
         const t = await sequelize.transaction();
 
         try {
@@ -83,7 +83,7 @@ class TransactionService {
                 id_user,
                 total: details.reduce((sum, detail) => sum + (detail.price * detail.amount), 0),
                 status: typeof status !== 'undefined' ? status : transaction.status,
-                payament_method: typeof payament_method !== 'undefined' ? payament_method : transaction.payament_method
+                payament_method: typeof payment_method !== 'undefined' ? payment_method : transaction.payament_method
             }, { transaction: t });
 
             await DetailTransaction.destroy({

@@ -1,4 +1,4 @@
-import Product from "../models/product.model.js";
+﻿import Product from "../models/product.model.js";
 import Print from "../models/print.model.js";
 import Item from "../models/item.model.js";
 import SpecialService from "../models/sp_service.model.js";
@@ -26,10 +26,18 @@ class ProductService {
                 await t.commit();
                 return { id_item: product.id_product, name: item.name, amount: product.amount, type: product.type, description: product.description, price: product.price }
             } else if (type === "print") {
-                const existsPrint = await Print.findOne({ where: { print_type: type_print }, transaction: t });
-                if (existsPrint) throw new Error("Ya existe una impresion con el mismo tipo");
                 const product = await Product.create({ type: type, description: description, price: price, id_file, amount }, { transaction: t });
-                const print = await Print.create({ id_print: product.id_product, print_type: type_print, paper_type: type_paper, status: typeof status !== 'undefined' ? status : undefined }, { transaction: t });
+                const print = await Print.create({
+                    id_print: product.id_product,
+                    print_type: type_print,
+                    paper_type: type_paper,
+                    paper_size: (typeof paper_size !== 'undefined' ? paper_size : (typeof product.paper_size !== 'undefined' ? product.paper_size : '')),
+                    range: (typeof range !== 'undefined' ? range : (typeof product.range !== 'undefined' ? product.range : 'all')),
+                    both_sides: (typeof both_sides !== 'undefined' ? both_sides : false),
+                    amount: (typeof print_amount !== 'undefined' ? print_amount : (typeof amount !== 'undefined' ? amount : 0)),
+                    observations: (typeof observations !== 'undefined' ? observations : null),
+                    status: typeof status !== 'undefined' ? status : undefined
+                }, { transaction: t });
                 await t.commit();
                 return { id_item: product.id_product, type_print: print.print_type, type_paper: print.paper_type, status: print.status, type: product.type, description: product.description, price: product.price }
             } else {
@@ -47,7 +55,12 @@ class ProductService {
                 }
 
                 if (service_type === "enc_imp") {
-                    await SpecialServiceBound.create({ id_special_service_bound: product.id_product, cover_type: cover_type, cover_color: cover_color }, { transaction: t });
+                    await SpecialServiceBound.create({
+                        id_special_service_bound: product.id_product,
+                        cover_type: (typeof cover_type !== 'undefined' ? cover_type : 'hard'),
+                        cover_color: (typeof cover_color !== 'undefined' ? cover_color : 'red'),
+                        spiral: (typeof spiral_type !== 'undefined' ? spiral_type : null)
+                    }, { transaction: t });
                 } else if (service_type === "ani_imp") {
                     await SpecialServiceSpiral.create({ id_special_service_spiral: product.id_product, spiral_type: spiral_type }, { transaction: t });
                 } else if (service_type === "doc_esp") {
