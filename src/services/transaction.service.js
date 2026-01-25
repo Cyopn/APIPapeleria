@@ -14,7 +14,7 @@ class TransactionService {
                 id_user,
                 total: details.reduce((sum, detail) => sum + (detail.price * detail.amount), 0),
                 status: typeof status !== 'undefined' ? status : undefined,
-                payament_method: typeof payment_method !== 'undefined' ? payment_method : undefined
+                payment_method
             }, { transaction: t });
 
             const detailPromises = details.map(detail =>
@@ -83,7 +83,7 @@ class TransactionService {
                 id_user,
                 total: details.reduce((sum, detail) => sum + (detail.price * detail.amount), 0),
                 status: typeof status !== 'undefined' ? status : transaction.status,
-                payament_method: typeof payment_method !== 'undefined' ? payment_method : transaction.payament_method
+                payment_method
             }, { transaction: t });
 
             await DetailTransaction.destroy({

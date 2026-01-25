@@ -35,10 +35,11 @@ const Transaction = sequelize.define("transaction", {
         allowNull: false,
         defaultValue: "pending",
     },
-    payament_method: {
+    payment_method: {
         type: DataTypes.STRING,
         allowNull: true,
     }
+
 }, { tableName: "transaction", timestamps: true, underscored: true });
 
 export default Transaction;
