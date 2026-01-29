@@ -50,7 +50,6 @@ export const deleteProduct = async (req, res, next) => {
     }
 };
 
-// Normalize camelCase payload keys from clients to snake_case used by services/models
 function normalizeProductPayload(body = {}) {
     const p = Object.assign({}, body);
     if (typeof p.typePrint !== 'undefined' && typeof p.type_print === 'undefined') p.type_print = p.typePrint;

@@ -9,8 +9,9 @@ const SpecialService = sequelize.define("special_service", {
         onDelete: "CASCADE",
         onUpdate: "CASCADE"
     },
-    type: { type: DataTypes.ENUM("enc_imp", "ani_imp", "doc_esp"), allowNull: false, },
+    type: { type: DataTypes.ENUM("enc_imp", "ani_imp", "doc_esp", "photo"), allowNull: false, },
     mode: { type: DataTypes.ENUM("online", "presential"), allowNull: false, },
+    delivery: { type: DataTypes.DATE, allowNull: false, },
     observations: { type: DataTypes.TEXT, allowNull: true },
 }, { tableName: "special_service", timestamps: true, underscored: true });
 

@@ -6,11 +6,13 @@ import SpecialService from "./sp_service.model.js";
 import SpecialServiceData from "./sp_service.data.model.js";
 import SpecialServiceBound from "./sp_service.bound.model.js";
 import SpecialServiceSpiral from "./sp_service.spiral.model.js";
+import SpecialServicePhoto from "./sp_service.photo.model.js";
 import SpecialServiceDocument from "./sp_service.document.model.js";
 import Product from "./product.model.js";
 import Transaction from "./transaction.model.js";
 import DetailTransaction from "./detail_transaction.model.js";
 import File from "./file.model.js";
+import QRCode from "./qr_code.model.js";
 
 Product.hasOne(Item, {
     foreignKey: "id_item",
@@ -78,6 +80,15 @@ SpecialServiceDocument.belongsTo(SpecialService, {
     as: "special_service"
 });
 
+SpecialService.hasOne(SpecialServicePhoto, {
+    foreignKey: "id_special_service_photo",
+    as: "photo"
+});
+SpecialServicePhoto.belongsTo(SpecialService, {
+    foreignKey: "id_special_service_photo",
+    as: "special_service"
+});
+
 Transaction.hasMany(DetailTransaction, {
     foreignKey: "id_transaction",
     as: "details"
@@ -128,6 +139,16 @@ Product.belongsTo(File, {
     as: "file"
 });
 
+Transaction.hasOne(QRCode, {
+    foreignKey: "id_transaction",
+    as: "qr_code"
+});
+
+QRCode.belongsTo(Transaction, {
+    foreignKey: "id_transaction",
+    as: "transaction"
+});
+
 const db = {
     sequelize,
     User,
@@ -139,9 +160,11 @@ const db = {
     SpecialServiceBound,
     SpecialServiceSpiral,
     SpecialServiceDocument,
+    SpecialServicePhoto,
     Transaction,
     DetailTransaction,
-    File
+    File,
+    QRCode
 };
 
 export default db;

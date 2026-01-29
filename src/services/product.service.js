@@ -7,11 +7,12 @@ import SpecialServiceData from "../models/sp_service.data.model.js";
 import SpecialServiceBound from "../models/sp_service.bound.model.js";
 import SpecialServiceSpiral from "../models/sp_service.spiral.model.js";
 import SpecialServiceDocument from "../models/sp_service.document.model.js";
+import SpecialServicePhoto from "../models/sp_service.photo.model.js";
 import DetailTransaction from "../models/detail_transaction.model.js";
 import sequelize from "../config/db.js";
 
 class ProductService {
-    async create({ type, description, price, filename, filehash, id_file = null, amount = 0, name, type_print, type_paper, paper_size, range, both_sides, print_amount, observations, status, mode, service_type, cover_type, cover_color, spiral_type, document_type, binding_type }) {
+    async create({ type, description, price, filename, filehash, id_file = null, amount = 0, name, type_print, type_paper, paper_size, range, both_sides, print_amount, observations, status, mode, service_type, delivery, id_print, cover_type, cover_color, spiral_type, document_type, binding_type, photo_size, paper_type }) {
         const t = await sequelize.transaction();
         try {
             if ((filename || filehash) && !id_file) {
@@ -42,7 +43,7 @@ class ProductService {
                 return { id_item: product.id_product, type_print: print.print_type, type_paper: print.paper_type, status: print.status, type: product.type, description: product.description, price: product.price }
             } else {
                 const product = await Product.create({ type: type, description: description, price: price, id_file, amount }, { transaction: t });
-                const sp_services = await SpecialService.create({ id_special_service: product.id_product, type: service_type, mode: mode }, { transaction: t });
+                const sp_services = await SpecialService.create({ id_special_service: product.id_product, type: service_type, mode: mode, delivery: delivery, observations: observations }, { transaction: t });
                 if (mode === "online") {
                     let linkedPrintId = id_print;
                     if (!linkedPrintId) {
@@ -65,6 +66,8 @@ class ProductService {
                     await SpecialServiceSpiral.create({ id_special_service_spiral: product.id_product, spiral_type: spiral_type }, { transaction: t });
                 } else if (service_type === "doc_esp") {
                     await SpecialServiceDocument.create({ id_special_service_document: product.id_product, document_type: document_type, binding_type: binding_type }, { transaction: t });
+                } else if (service_type === "photo") {
+                    await SpecialServicePhoto.create({ id_special_service_photo: product.id_product, photo_size: photo_size, paper_type: paper_type }, { transaction: t });
                 }
 
                 await t.commit();
@@ -90,6 +93,7 @@ class ProductService {
                         { model: SpecialServiceBound, as: "bound" },
                         { model: SpecialServiceSpiral, as: "spiral" },
                         { model: SpecialServiceDocument, as: "document" },
+                        { model: SpecialServicePhoto, as: "photo" },
                     ]
                 },
                 { model: DetailTransaction, as: "detail_transactions" }
@@ -111,6 +115,7 @@ class ProductService {
                         { model: SpecialServiceBound, as: "bound" },
                         { model: SpecialServiceSpiral, as: "spiral" },
                         { model: SpecialServiceDocument, as: "document" },
+                        { model: SpecialServicePhoto, as: "photo" },
                     ]
                 },
                 { model: DetailTransaction, as: "detail_transactions" }
@@ -190,6 +195,15 @@ class ProductService {
                     if (existsDoc) await SpecialServiceDocument.update(docUpdates, { where: { id_special_service_document: id }, transaction: t });
                     else await SpecialServiceDocument.create(Object.assign({ id_special_service_document: id }, docUpdates), { transaction: t });
                 }
+
+                if (typeof payload.photo_size !== 'undefined' || typeof payload.paper_type !== 'undefined') {
+                    const existsPhoto = await SpecialServicePhoto.findOne({ where: { id_special_service_photo: id }, transaction: t });
+                    const photoUpdates = {};
+                    if (typeof payload.photo_size !== 'undefined') photoUpdates.photo_size = payload.photo_size;
+                    if (typeof payload.paper_type !== 'undefined') photoUpdates.paper_type = payload.paper_type;
+                    if (existsPhoto) await SpecialServicePhoto.update(photoUpdates, { where: { id_special_service_photo: id }, transaction: t });
+                    else await SpecialServicePhoto.create(Object.assign({ id_special_service_photo: id }, photoUpdates), { transaction: t });
+                }
             }
 
             await t.commit();
@@ -207,6 +221,7 @@ class ProductService {
             await SpecialServiceBound.destroy({ where: { id_special_service_bound: id }, transaction: t });
             await SpecialServiceSpiral.destroy({ where: { id_special_service_spiral: id }, transaction: t });
             await SpecialServiceDocument.destroy({ where: { id_special_service_document: id }, transaction: t });
+            await SpecialServicePhoto.destroy({ where: { id_special_service_photo: id }, transaction: t });
 
             await DetailTransaction.destroy({ where: { id_product: id }, transaction: t });
 

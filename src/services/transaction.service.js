@@ -1,7 +1,9 @@
 ﻿import Transaction from '../models/transaction.model.js';
 import DetailTransaction from '../models/detail_transaction.model.js';
 import Product from '../models/product.model.js';
+import QRCode from '../models/qr_code.model.js';
 import sequelize from '../config/db.js';
+import QRCodeService from './qr_code.service.js';
 
 class TransactionService {
     async create({ type, date, id_user, details, status, payment_method }) {
@@ -29,7 +31,20 @@ class TransactionService {
             await Promise.all(detailPromises);
             await t.commit();
 
-            return transaction;
+            const qrData = await QRCodeService.createQRForTransaction({
+                id_transaction: transaction.id_transaction,
+                id_user: transaction.id_user,
+                type: transaction.type,
+                total: transaction.total,
+                date: transaction.date,
+                status: transaction.status
+            });
+
+            return {
+                ...transaction.dataValues,
+                qr_code: qrData.qr_code,
+                qr_info: qrData.qr_info
+            };
         } catch (error) {
             await t.rollback();
             throw error;
@@ -45,6 +60,9 @@ class TransactionService {
                     model: Product,
                     as: 'product'
                 }]
+            }, {
+                model: QRCode,
+                as: 'qr_code'
             }]
         });
     }
@@ -58,6 +76,9 @@ class TransactionService {
                     model: Product,
                     as: 'product'
                 }]
+            }, {
+                model: QRCode,
+                as: 'qr_code'
             }]
         });
 
@@ -65,7 +86,25 @@ class TransactionService {
             throw new Error('Transacción no encontrada');
         }
 
-        return transaction;
+        let qrData;
+        try {
+            qrData = await QRCodeService.getQRByTransactionId(id);
+        } catch (error) {
+            qrData = await QRCodeService.createQRForTransaction({
+                id_transaction: transaction.id_transaction,
+                id_user: transaction.id_user,
+                type: transaction.type,
+                total: transaction.total,
+                date: transaction.date,
+                status: transaction.status
+            });
+        }
+
+        return {
+            ...transaction.dataValues,
+            qr_code: qrData.qr_code,
+            qr_info: qrData.qr_info
+        };
     }
 
     async update(id, { type, date, id_user, details, status, payment_method }) {
@@ -103,7 +142,20 @@ class TransactionService {
             await Promise.all(detailPromises);
             await t.commit();
 
-            return transaction;
+            const qrData = await QRCodeService.updateQRForTransaction({
+                id_transaction: transaction.id_transaction,
+                id_user: transaction.id_user,
+                type: transaction.type,
+                total: transaction.total,
+                date: transaction.date,
+                status: transaction.status
+            });
+
+            return {
+                ...transaction.dataValues,
+                qr_code: qrData.qr_code,
+                qr_info: qrData.qr_info
+            };
         } catch (error) {
             await t.rollback();
             throw error;

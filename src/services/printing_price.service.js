@@ -29,7 +29,6 @@ class PrintingPriceService {
 
         const missing = [];
         if (colorMode === undefined || colorMode === null || colorMode === '') missing.push('colorModes');
-        // para 'photo' no son obligatorios: paperSizes, ranges, bothSides, sets
         if (calcType !== 'photo') {
             if (paperSize === undefined || paperSize === null || paperSize === '') missing.push('paperSizes');
             if (range === undefined || range === null || range === '') missing.push('ranges');
@@ -104,7 +103,6 @@ class PrintingPriceService {
             bindingCostPerSet = ringCost;
             bindingBreakdown = { ringType, ringCost: Number(ringCost.toFixed ? ringCost.toFixed(PREC) : ringCost) };
         }
-        // soporte para tipo 'photo' (tipo de papel foto: brillante, mate, satinado)
         if (calcType === 'photo') {
             const PHOTO_PAPER_BRILLO = Number(PRICING.PHOTO_PAPER_BRILLO);
             const PHOTO_PAPER_MATE = Number(PRICING.PHOTO_PAPER_MATE);
@@ -115,7 +113,6 @@ class PrintingPriceService {
             else if (pt.includes('satin') || pt.includes('satinado')) perSheet = PHOTO_PAPER_SATIN;
             const photoPaperCost = perSheet * sheets;
             paperCost = photoPaperCost;
-            // add breakdown info inside bindingBreakdown object for reuse
             bindingBreakdown.photo = { paperType, photoPaperCost: Number(photoPaperCost.toFixed ? photoPaperCost.toFixed(PREC) : photoPaperCost) };
         }
         if (calcType === 'docs') {
@@ -134,7 +131,6 @@ class PrintingPriceService {
         let totalPerSet = Number((inkCost + paperCost + bindingCostPerSet + (typeof docsCostPerSet !== 'undefined' ? docsCostPerSet : 0)).toFixed(PREC));
         let totalPrice = Number((totalPerSet * sets).toFixed(PREC));
         if (calcType === 'photo') {
-            // para photo no se usan sets ni breakdowns por set
             totalPerSet = Number((inkCost + paperCost + bindingCostPerSet).toFixed(PREC));
             totalPrice = totalPerSet;
         }
@@ -192,10 +188,8 @@ class PrintingPriceService {
             paperCostTotal
         };
 
-        // Siempre incluir breakdownTotal con al menos inkCost y paperCost
         result.breakdownTotal = Object.assign({}, breakdownTotal, { inkCost: inkCostTotal, paperCost: paperCostTotal });
 
-        // breakdownPerSet solo cuando no es photo
         if (calcType !== 'photo') {
             result.breakdownPerSet = breakdownPerSet;
         }
