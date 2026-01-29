@@ -9,6 +9,26 @@ class FileService {
         return file;
     }
 
+    async uploadMany(files = []) {
+        if (!Array.isArray(files)) throw new Error('Se esperaba un arreglo de archivos');
+        const created = [];
+        const t = await File.sequelize.transaction();
+        try {
+            for (const f of files) {
+                const { id_user, filename, type, filehash } = f;
+                const user = await User.findByPk(id_user, { transaction: t });
+                if (!user) throw new Error("Usuario no encontrado para uno de los archivos");
+                const file = await File.create({ id_user: user.id_user, filename: filename, status: "active", type: type, filehash: filehash }, { transaction: t });
+                created.push(file);
+            }
+            await t.commit();
+            return created;
+        } catch (err) {
+            await t.rollback();
+            throw err;
+        }
+    }
+
     async findAll() {
         return await File.findAll({ attributes: ["id_file", "id_user", "filename", "status", "type", "filehash", "createdAt"] })
     }

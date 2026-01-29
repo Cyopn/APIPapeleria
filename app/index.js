@@ -145,11 +145,17 @@ async function runSeedAutomation() {
 
         const productIdMap = {};
         for (const p of seedProducts) {
-            // Si el seed hace referencia a un archivo por nombre, mapeamos a id_file
+            // Si el seed hace referencia a un archivo por nombre (o varios), mapeamos a id_file / id_files
             const payload = Object.assign({}, p);
-            if (!payload.id_file && (payload.filename || payload.file || payload.fileName)) {
-                const base = mapKeyFromFilename(payload.filename || payload.file || payload.fileName);
-                if (fileIdMap[base]) payload.id_file = fileIdMap[base];
+            const fref = payload.filename || payload.file || payload.fileName;
+            if (fref) {
+                const names = Array.isArray(fref) ? fref : [fref];
+                const ids = names.map(n => {
+                    const base = mapKeyFromFilename(n);
+                    return fileIdMap[base];
+                }).filter(Boolean);
+                if (!payload.id_file && ids.length === 1) payload.id_file = ids[0];
+                if (ids.length > 0) payload.id_files = ids;
             }
 
             console.log('Creando product con payload:', payload);

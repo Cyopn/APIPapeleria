@@ -63,6 +63,6 @@ function normalizeProductPayload(body = {}) {
     if (typeof p.spiralType !== 'undefined' && typeof p.spiral_type === 'undefined') p.spiral_type = p.spiralType;
     if (typeof p.documentType !== 'undefined' && typeof p.document_type === 'undefined') p.document_type = p.documentType;
     if (typeof p.bindingType !== 'undefined' && typeof p.binding_type === 'undefined') p.binding_type = p.bindingType;
-    if (typeof p.type_print !== 'undefined' && typeof p.typePrint === 'undefined') p.typePrint = p.type_print; // keep both for compatibility
+    if (typeof p.type_print !== 'undefined' && typeof p.typePrint === 'undefined') p.typePrint = p.type_print;
     return p;
 }

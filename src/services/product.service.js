@@ -12,22 +12,22 @@ import DetailTransaction from "../models/detail_transaction.model.js";
 import sequelize from "../config/db.js";
 
 class ProductService {
-    async create({ type, description, price, filename, filehash, id_file = null, amount = 0, name, type_print, type_paper, paper_size, range, both_sides, print_amount, observations, status, mode, service_type, delivery, id_print, cover_type, cover_color, spiral_type, document_type, binding_type, photo_size, paper_type }) {
+    async create({ type, description, price, filename, filehash, id_file = null, id_files = null, amount = 0, name, type_print, type_paper, paper_size, range, both_sides, print_amount, observations, status, mode, service_type, delivery, id_print, cover_type, cover_color, spiral_type, document_type, binding_type, photo_size, paper_type }) {
         const t = await sequelize.transaction();
         try {
-            if ((filename || filehash) && !id_file) {
-                throw new Error("Para asociar un archivo primero súbelo con file.service y pasa 'id_file' en el payload");
+            if ((filename || filehash) && !id_file && !id_files) {
+                throw new Error("Para asociar un archivo primero súbelo con file.service y pasa 'id_file' o 'id_files' en el payload");
             }
 
             if (type === "item") {
                 const existsItem = await Item.findOne({ where: { name }, transaction: t });
                 if (existsItem) throw new Error("Ya existe un producto con el mismo nombre");
-                const product = await Product.create({ type: type, description: description, price: price, id_file, amount }, { transaction: t });
+                const product = await Product.create({ type: type, description: description, price: price, id_file, id_files, amount }, { transaction: t });
                 const item = await Item.create({ id_item: product.id_product, name: name }, { transaction: t });
                 await t.commit();
                 return { id_item: product.id_product, name: item.name, amount: product.amount, type: product.type, description: product.description, price: product.price }
             } else if (type === "print") {
-                const product = await Product.create({ type: type, description: description, price: price, id_file, amount }, { transaction: t });
+                const product = await Product.create({ type: type, description: description, price: price, id_file, id_files, amount }, { transaction: t });
                 const print = await Print.create({
                     id_print: product.id_product,
                     print_type: type_print,
@@ -42,13 +42,13 @@ class ProductService {
                 await t.commit();
                 return { id_item: product.id_product, type_print: print.print_type, type_paper: print.paper_type, status: print.status, type: product.type, description: product.description, price: product.price }
             } else {
-                const product = await Product.create({ type: type, description: description, price: price, id_file, amount }, { transaction: t });
+                const product = await Product.create({ type: type, description: description, price: price, id_file, id_files, amount }, { transaction: t });
                 const sp_services = await SpecialService.create({ id_special_service: product.id_product, type: service_type, mode: mode, delivery: delivery, observations: observations }, { transaction: t });
                 if (mode === "online") {
                     let linkedPrintId = id_print;
                     if (!linkedPrintId) {
                         if (!type_print || !type_paper) throw new Error("Faltan datos de impresión para crear el print asociado (type_print, type_paper)");
-                        const printProduct = await Product.create({ type: 'print', description: `Print for special_service ${product.id_product}`, price: 0, id_file: null, amount: 0 }, { transaction: t });
+                        const printProduct = await Product.create({ type: 'print', description: `Print for special_service ${product.id_product}`, price: 0, id_file: null, id_files: null, amount: 0 }, { transaction: t });
                         await Print.create({ id_print: printProduct.id_product, print_type: type_print, paper_type: type_paper, paper_size: (typeof paper_size !== 'undefined' ? paper_size : null), range: (typeof range !== 'undefined' ? range : null), both_sides: (typeof both_sides !== 'undefined' ? both_sides : false), amount: (typeof print_amount !== 'undefined' ? print_amount : 0), observations: (typeof observations !== 'undefined' ? observations : null), status: typeof status !== 'undefined' ? status : undefined }, { transaction: t });
                         linkedPrintId = printProduct.id_product;
                     }
@@ -100,6 +100,19 @@ class ProductService {
             ]
         });
 
+        for (const p of products) {
+            try {
+                const ids = p.id_files || (p.dataValues && p.dataValues.id_files) || null;
+                if (ids) {
+                    const parsed = Array.isArray(ids) ? ids : (typeof ids === 'string' ? JSON.parse(ids) : [ids]);
+                    const files = await File.findAll({ where: { id_file: parsed } });
+                    p.dataValues.files = files;
+                }
+            } catch (e) {
+
+            }
+        }
+
         return { prints, items, products };
     }
 
@@ -122,6 +135,15 @@ class ProductService {
             ]
         });
         if (!product) throw new Error('Producto no encontrado');
+        try {
+            const ids = product.id_files || (product.dataValues && product.dataValues.id_files) || null;
+            if (ids) {
+                const parsed = Array.isArray(ids) ? ids : (typeof ids === 'string' ? JSON.parse(ids) : [ids]);
+                const files = await File.findAll({ where: { id_file: parsed } });
+                product.dataValues.files = files;
+            }
+        } catch (e) {
+        }
         return product;
     }
 
@@ -131,12 +153,13 @@ class ProductService {
             const product = await Product.findByPk(id, { transaction: t });
             if (product === null) throw new Error("El producto no existe")
 
-            const { description, price, amount, id_file } = payload;
+            const { description, price, amount, id_file, id_files } = payload;
             const productUpdates = {};
             if (typeof description !== 'undefined') productUpdates.description = description;
             if (typeof price !== 'undefined') productUpdates.price = price;
             if (typeof amount !== 'undefined') productUpdates.amount = amount;
             if (typeof id_file !== 'undefined') productUpdates.id_file = id_file;
+            if (typeof id_files !== 'undefined') productUpdates.id_files = id_files;
             if (Object.keys(productUpdates).length) {
                 await Product.update(productUpdates, { where: { id_product: id }, transaction: t });
             }

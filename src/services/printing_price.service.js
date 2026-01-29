@@ -5,6 +5,14 @@ import { PRICING } from '../config/env.js'
 class PrintingPriceService {
     async calculateFromStoredFile(filename, service) {
         if (!filename) throw new Error('filename requerido');
+        if (Array.isArray(filename)) {
+            const results = await Promise.all(filename.map(async (fn) => {
+                const filePath = await fileManagerService.getFilePath(service, fn);
+                const price = await printingPrice(filePath);
+                return { filename: fn, price };
+            }));
+            return results;
+        }
         const filePath = await fileManagerService.getFilePath(service, filename);
         const price = await printingPrice(filePath);
         return price;

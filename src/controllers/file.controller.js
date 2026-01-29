@@ -2,8 +2,13 @@ import fileService from "../services/file.service.js";
 
 export const createFile = async (req, res, next) => {
     try {
-        const file = await fileService.upload(req.body);
-        return res.status(201).json(file);
+        if (Array.isArray(req.body)) {
+            const files = await fileService.uploadMany(req.body);
+            return res.status(201).json(files);
+        } else {
+            const file = await fileService.upload(req.body);
+            return res.status(201).json(file);
+        }
     } catch (error) {
         next(error);
     }

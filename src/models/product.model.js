@@ -24,6 +24,12 @@ const Product = sequelize.define("product", {
         onDelete: "SET NULL",
         onUpdate: "CASCADE",
     },
+    id_files: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: null,
+        comment: 'Array de ids de archivos asociados (compatibilidad para multiples archivos)'
+    },
     amount: {
         type: DataTypes.INTEGER,
         allowNull: false,
