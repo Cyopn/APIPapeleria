@@ -13,7 +13,7 @@ class UserService {
     }
 
     async findAll() {
-        return await User.findAll({ attributes: ["id_user", "username", "createdAt", "phone"] });
+        return await User.findAll({ attributes: ["id_user", "username", "names", "lastnames", "email", "role", "phone", "createdAt", "updatedAt"] });
     }
 
     async findOne(id) {
