@@ -15,11 +15,7 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node ./src/server.js",
-    "test:unit": "UNIT_TEST=true node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --detectOpenHandles src/tests --testPathIgnorePatterns=src/tests/integration",
-    "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --detectOpenHandles src/tests/integration",
-    "coverage": "nyc --reporter=lcov --reporter=text npm test",
-    "coverage:jest": "UNIT_TEST=true node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --runInBand"
+    "start": "node ./src/server.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
