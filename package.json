@@ -15,7 +15,8 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node ./src/server.js"
+    "start": "node ./src/server.js",
+    "seed:node": "node ./app/run_seed_node.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

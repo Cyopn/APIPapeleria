@@ -13,7 +13,7 @@
 */
 
 const apiBase = "https://noninitial-chirurgical-judah.ngrok-free.dev/api"; // Cambia si usas otro host
-const AUTH_TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJjaGlwIiwiaWF0IjoxNzY0NzA2MDc5fQ.A8mcPd18Vng485-7NA-VBvZueuOOXYbU6_sgl0EZLrU";
+const AUTH_TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJjaGlwIiwiaWF0IjoxNzcwOTk2OTkwfQ.uSlvZUbZ3Orsy_PBLrdw5hvh_lA5hBYoe5hqetaysrk";
 const DEFAULT_USER_ID = 1;
 
 async function fetchJson(url) {
