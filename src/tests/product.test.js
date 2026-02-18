@@ -36,7 +36,7 @@ describe('Product Service', () => {
     });
 
     test('create item product branch', async () => {
-        const input = { id: null, type: 'item', description: 'desc', price: 10, name: 'P1', amount: 5 };
+        const input = { id: null, type: 'item', description: 'desc', price: 10, name: 'P1' };
         ItemMock.findOne.mockResolvedValue(null);
         ProductMock.create.mockResolvedValue({ id_product: 50, type: 'item', description: input.description, price: input.price });
         ItemMock.create.mockResolvedValue({ id_item: 50, name: input.name });

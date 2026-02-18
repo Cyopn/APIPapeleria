@@ -144,10 +144,15 @@ async function runSeedAutomation() {
         const seedProducts = await fetchJson('./prods/seed_products.json');
 
         const productIdMap = {};
-        for (const p of seedProducts) {
+        for (let i = 0; i < seedProducts.length; i++) {
+            const p = seedProducts[i];
             // Si el seed hace referencia a un archivo por nombre (o varios), mapeamos a id_file / id_files
             const payload = Object.assign({}, p);
-            const fref = payload.filename || payload.file || payload.fileName;
+            let fref = payload.filename || payload.file || payload.fileName;
+            // Si no viene fref, intentar usar el seedFiles por posición (están en el mismo orden)
+            if (!fref && Array.isArray(seedFiles) && seedFiles[i]) {
+                fref = seedFiles[i].filename || seedFiles[i].file || seedFiles[i].name;
+            }
             if (fref) {
                 const names = Array.isArray(fref) ? fref : [fref];
                 const ids = names.map(n => {

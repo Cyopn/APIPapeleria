@@ -18,7 +18,7 @@ describe('Integration /api/products', () => {
     beforeEach(() => jest.clearAllMocks());
 
     test('POST /api/products should create product', async () => {
-        const payload = { type: 'item', description: 'd', price: 10, name: 'n', amount: 1 };
+        const payload = { type: 'item', description: 'd', price: 10, name: 'n' };
         ItemMock.findOne.mockResolvedValue(null);
         ProductMock.create.mockResolvedValue({ id_product: 2, type: 'item' });
         ItemMock.create.mockResolvedValue({ id_item: 2, name: 'n' });
