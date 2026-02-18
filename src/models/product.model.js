@@ -30,11 +30,6 @@ const Product = sequelize.define("product", {
         defaultValue: null,
         comment: 'Array de ids de archivos asociados (compatibilidad para multiples archivos)'
     },
-    amount: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        validate: { min: 0 },
-    },
 }, { tableName: "product", timestamps: true, underscored: true });
 
 export default Product;

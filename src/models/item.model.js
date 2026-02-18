@@ -10,6 +10,7 @@ const Item = sequelize.define('item', {
         onUpdate: "CASCADE"
     },
     name: { type: DataTypes.STRING, allowNull: false },
+    available: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
 }, { tableName: 'item', timestamps: true, underscored: true });
 
 export default Item;
