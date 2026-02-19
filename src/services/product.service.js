@@ -80,40 +80,36 @@ class ProductService {
     }
 
     async findAll() {
-        const prints = await Print.findAll();
-        const items = await Item.findAll();
         const products = await Product.findAll({
             include: [
                 { model: File, as: "file" },
                 { model: Item, as: "item" },
-                { model: Print, as: "print" },
-                {
-                    model: SpecialService, as: "special_service", include: [
-                        { model: SpecialServiceData, as: "data" },
-                        { model: SpecialServiceBound, as: "bound" },
-                        { model: SpecialServiceSpiral, as: "spiral" },
-                        { model: SpecialServiceDocument, as: "document" },
-                        { model: SpecialServicePhoto, as: "photo" },
-                    ]
-                },
-                { model: DetailTransaction, as: "detail_transactions" }
+                { model: Print, as: "print" }
             ]
         });
 
         for (const p of products) {
             try {
-                const ids = p.id_files || (p.dataValues && p.dataValues.id_files) || null;
+                const ids = p.id_files ?? (p.dataValues && p.dataValues.id_files) ?? null;
                 if (ids) {
-                    const parsed = Array.isArray(ids) ? ids : (typeof ids === 'string' ? JSON.parse(ids) : [ids]);
-                    const files = await File.findAll({ where: { id_file: parsed } });
-                    p.dataValues.files = files;
+                    let parsed = Array.isArray(ids) ? ids : (typeof ids === 'string' ? JSON.parse(ids) : [ids]);
+                    parsed = parsed.map(id => Number(id)).filter(n => !isNaN(n));
+                    if (parsed.length) {
+                        const files = await File.findAll({ where: { id_file: parsed } });
+                        const filesById = new Map(files.map(f => [f.id_file, f]));
+                        p.dataValues.files = parsed.map(id => filesById.get(id) || null).filter(f => f !== null);
+                    } else {
+                        p.dataValues.files = [];
+                    }
+                } else {
+                    p.dataValues.files = [];
                 }
             } catch (e) {
-
+                p.dataValues.files = [];
             }
         }
 
-        return { prints, items, products };
+        return { products };
     }
 
     async findOne(id) {
@@ -130,19 +126,26 @@ class ProductService {
                         { model: SpecialServiceDocument, as: "document" },
                         { model: SpecialServicePhoto, as: "photo" },
                     ]
-                },
-                { model: DetailTransaction, as: "detail_transactions" }
+                }
             ]
         });
         if (!product) throw new Error('Producto no encontrado');
         try {
-            const ids = product.id_files || (product.dataValues && product.dataValues.id_files) || null;
+            const ids = product.id_files ?? (product.dataValues && product.dataValues.id_files) ?? null;
             if (ids) {
-                const parsed = Array.isArray(ids) ? ids : (typeof ids === 'string' ? JSON.parse(ids) : [ids]);
-                const files = await File.findAll({ where: { id_file: parsed } });
-                product.dataValues.files = files;
+                let parsed = Array.isArray(ids) ? ids : (typeof ids === 'string' ? JSON.parse(ids) : [ids]);
+                parsed = parsed.map(id => Number(id)).filter(n => !isNaN(n));
+                if (parsed.length) {
+                    const files = await File.findAll({ where: { id_file: parsed } });
+                    product.dataValues.files = files;
+                } else {
+                    product.dataValues.files = [];
+                }
+            } else {
+                product.dataValues.files = [];
             }
         } catch (e) {
+            product.dataValues.files = [];
         }
         return product;
     }
