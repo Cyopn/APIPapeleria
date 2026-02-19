@@ -19,6 +19,16 @@ export const listProducts = async (req, res, next) => {
     }
 };
 
+export const listProductsByType = async (req, res, next) => {
+    try {
+        const { type } = req.params;
+        const products = await productService.findByType(type);
+        res.json(products);
+    } catch (err) {
+        next(err);
+    }
+};
+
 export const getProduct = async (req, res, next) => {
     try {
         const { id } = req.params;

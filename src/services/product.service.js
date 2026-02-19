@@ -80,13 +80,35 @@ class ProductService {
     }
 
     async findAll() {
-        const products = await Product.findAll({
-            include: [
-                { model: File, as: "file" },
-                { model: Item, as: "item" },
-                { model: Print, as: "print" }
-            ]
-        });
+        const products = await Product.findAll({});
+
+        for (const p of products) {
+            try {
+                const ids = p.id_files ?? (p.dataValues && p.dataValues.id_files) ?? null;
+                if (ids) {
+                    let parsed = Array.isArray(ids) ? ids : (typeof ids === 'string' ? JSON.parse(ids) : [ids]);
+                    parsed = parsed.map(id => Number(id)).filter(n => !isNaN(n));
+                    if (parsed.length) {
+                        const files = await File.findAll({ where: { id_file: parsed } });
+                        const filesById = new Map(files.map(f => [f.id_file, f]));
+                        p.dataValues.files = parsed.map(id => filesById.get(id) || null).filter(f => f !== null);
+                    } else {
+                        p.dataValues.files = [];
+                    }
+                } else {
+                    p.dataValues.files = [];
+                }
+            } catch (e) {
+                p.dataValues.files = [];
+            }
+        }
+
+        return { products };
+    }
+
+    async findByType(type) {
+        const mappedType = type === 'sp_service' ? 'special_service' : type;
+        const products = await Product.findAll({ where: { type: mappedType } });
 
         for (const p of products) {
             try {
