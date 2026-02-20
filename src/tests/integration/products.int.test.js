@@ -18,10 +18,10 @@ describe('Integration /api/products', () => {
     beforeEach(() => jest.clearAllMocks());
 
     test('POST /api/products should create product', async () => {
-        const payload = { type: 'item', description: 'd', price: 10, name: 'n' };
+        const payload = { type: 'item', description: 'd', price: 10, name: 'n', category: 'oficina' };
         ItemMock.findOne.mockResolvedValue(null);
         ProductMock.create.mockResolvedValue({ id_product: 2, type: 'item' });
-        ItemMock.create.mockResolvedValue({ id_item: 2, name: 'n' });
+        ItemMock.create.mockResolvedValue({ id_item: 2, name: 'n', category: 'oficina' });
 
         const res = await request(app).post('/api/products').set('Authorization', `Bearer ${token}`).send(payload);
         expect(res.status).toBe(201);

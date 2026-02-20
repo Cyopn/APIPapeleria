@@ -7,7 +7,13 @@ const SpecialServiceDocument = sequelize.define("special_service_document", {
         primaryKey: true,
         references: { model: "special_service", key: "id_special_service" }
     },
-    document_type: { type: DataTypes.ENUM("tesis", "reporte", "examen","otro"), allowNull: false },
-}, { tableName: "special_service_document", timestamps: true });
+    document_type: {
+        type: DataTypes.ENUM("tesis", "reporte", "examen", "otro"),
+        allowNull: false
+    },
+}, {
+    tableName: "special_service_document",
+    timestamps: true
+});
 
 export default SpecialServiceDocument;

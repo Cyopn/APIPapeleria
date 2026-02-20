@@ -12,7 +12,7 @@ import DetailTransaction from "../models/detail_transaction.model.js";
 import sequelize from "../config/db.js";
 
 class ProductService {
-    async create({ type, description, price, filename, filehash, id_file = null, id_files = null, name, type_print, type_paper, paper_size, range, both_sides, print_amount, observations, status, mode, service_type, delivery, id_print, cover_type, cover_color, spiral_type, document_type, binding_type, photo_size, paper_type }) {
+    async create({ type, description, price, filename, filehash, id_file = null, id_files = null, name, category, type_print, type_paper, paper_size, range, both_sides, print_amount, observations, status, mode, service_type, delivery, id_print, cover_type, cover_color, spiral_type, document_type, binding_type, photo_size, paper_type }) {
         const t = await sequelize.transaction();
         try {
             if ((filename || filehash) && !id_file && !id_files) {
@@ -20,12 +20,13 @@ class ProductService {
             }
 
             if (type === "item") {
+                if (typeof category === 'undefined' || category === null) throw new Error("Falta 'category' para crear un item");
                 const existsItem = await Item.findOne({ where: { name }, transaction: t });
                 if (existsItem) throw new Error("Ya existe un producto con el mismo nombre");
                 const product = await Product.create({ type: type, description: description, price: price, id_file, id_files }, { transaction: t });
-                const item = await Item.create({ id_item: product.id_product, name: name }, { transaction: t });
+                const item = await Item.create({ id_item: product.id_product, name: name, category: category }, { transaction: t });
                 await t.commit();
-                return { id_item: product.id_product, name: item.name, type: product.type, description: product.description, price: product.price }
+                return { id_item: product.id_product, name: item.name, category: item.category, type: product.type, description: product.description, price: product.price }
             } else if (type === "print") {
                 const product = await Product.create({ type: type, description: description, price: price, id_file, id_files }, { transaction: t });
                 const print = await Print.create({
@@ -80,7 +81,19 @@ class ProductService {
     }
 
     async findAll() {
-        const products = await Product.findAll({});
+        const products = await Product.findAll({
+            include: [
+                { model: Item, as: "item" },
+                { model: Print, as: "print" }, {
+                    model: SpecialService, as: "special_service", include: [
+                        { model: SpecialServiceData, as: "data" },
+                        { model: SpecialServiceBound, as: "bound" },
+                        { model: SpecialServiceSpiral, as: "spiral" },
+                        { model: SpecialServiceDocument, as: "document" },
+                        { model: SpecialServicePhoto, as: "photo" },
+                    ]
+                }]
+        });
 
         for (const p of products) {
             try {
@@ -108,7 +121,19 @@ class ProductService {
 
     async findByType(type) {
         const mappedType = type === 'sp_service' ? 'special_service' : type;
-        const products = await Product.findAll({ where: { type: mappedType } });
+        const products = await Product.findAll({
+            where: { type: mappedType }, include: [
+                { model: Item, as: "item" },
+                { model: Print, as: "print" }, {
+                    model: SpecialService, as: "special_service", include: [
+                        { model: SpecialServiceData, as: "data" },
+                        { model: SpecialServiceBound, as: "bound" },
+                        { model: SpecialServiceSpiral, as: "spiral" },
+                        { model: SpecialServiceDocument, as: "document" },
+                        { model: SpecialServicePhoto, as: "photo" },
+                    ]
+                }]
+        });
 
         for (const p of products) {
             try {
@@ -190,9 +215,10 @@ class ProductService {
 
             const prodType = product.type;
             if (prodType === 'item') {
-                if (typeof payload.name !== 'undefined') {
-                    await Item.update({ name: payload.name }, { where: { id_item: id }, transaction: t });
-                }
+                const itemUpdates = {};
+                if (typeof payload.name !== 'undefined') itemUpdates.name = payload.name;
+                if (typeof payload.category !== 'undefined') itemUpdates.category = payload.category;
+                if (Object.keys(itemUpdates).length) await Item.update(itemUpdates, { where: { id_item: id }, transaction: t });
             } else if (prodType === 'print') {
                 const printUpdates = {};
                 if (typeof payload.type_print !== 'undefined') printUpdates.print_type = payload.type_print;

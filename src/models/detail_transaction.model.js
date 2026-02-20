@@ -37,6 +37,10 @@ const DetailTransaction = sequelize.define("detail_transaction", {
         allowNull: false,
         validate: { min: 0 }
     },
-}, { tableName: "detail_transaction", timestamps: true, underscored: true });
+}, {
+    tableName: "detail_transaction",
+    timestamps: true, 
+    underscored: true
+});
 
 export default DetailTransaction;

@@ -10,9 +10,13 @@ const SpecialServiceData = sequelize.define("special_service_data", {
         onUpdate: "CASCADE"
     },
     id_print: {
-        type: DataTypes.INTEGER, allowNull: false,
+        type: DataTypes.INTEGER,
+        allowNull: false,
         references: { model: "print", key: "id_print" }
     },
-}, { tableName: "special_service_data", timestamps: true });
+}, {
+    tableName: "special_service_data",
+    timestamps: true
+});
 
 export default SpecialServiceData;

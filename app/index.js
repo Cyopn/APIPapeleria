@@ -1,18 +1,4 @@
-/*
-    Script de automatización para crear: files -> products (items)
-    - Lee los JSON en `prods/seed_files.json`, `prods/seed_products.json`, `prods/seed_items.json`
-    - Para cada entry en seed_files: descarga el blob de `prods/images/<filename>` y lo sube a
-        `POST /api/file-manager?service=<service>` (envía FormData)
-    - Usa la respuesta del upload para crear el registro en `POST /api/files` (requiere filename, type, filehash)
-    - Guarda mapping filename -> id_file
-    - Crea products con `POST /api/products` usando `id_file` cuando aplique
-
-    Nota: este script está pensado para ejecutarse desde el navegador cuando la carpeta `app/`
-    está siendo servida (por ejemplo con un servidor estático). Los JSON e imágenes deben ser
-    accesibles desde la misma origen como `./prods/…`.
-*/
-
-const apiBase = "https://noninitial-chirurgical-judah.ngrok-free.dev/api"; // Cambia si usas otro host
+const apiBase = "http://localhost:4000/api";
 const AUTH_TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJjaGlwIiwiaWF0IjoxNzcwOTk2OTkwfQ.uSlvZUbZ3Orsy_PBLrdw5hvh_lA5hBYoe5hqetaysrk";
 const DEFAULT_USER_ID = 1;
 
@@ -41,7 +27,6 @@ async function uploadFileBlob(blob, filename, service) {
         throw new Error(`Upload failed ${res.status}: ${text}`);
     }
     const data = await res.json();
-    // La API a veces devuelve un arreglo o un objeto; normalizamos al primer objeto
     return Array.isArray(data) ? data[0] : data;
 }
 
@@ -83,7 +68,6 @@ async function createProduct(payload) {
 }
 
 function mapKeyFromFilename(filename) {
-    // Normaliza nombres para mapping: quita rutas y deja basename
     return filename.split('/').pop();
 }
 
@@ -92,10 +76,9 @@ async function runSeedAutomation() {
         console.log('Cargando seed_files.json...');
         const seedFiles = await fetchJson('./prods/seed_files.json');
 
-        const fileIdMap = {}; // filename (basename) -> id_file
+        const fileIdMap = {};
 
         for (const entry of seedFiles) {
-            // Esperamos que cada entry tenga al menos: filename, service (type)
             const filename = entry.filename || entry.file || entry.name;
             const service = entry.service || entry.type || 'file';
             if (!filename) {
@@ -117,17 +100,14 @@ async function runSeedAutomation() {
             const uploadRes = await uploadFileBlob(blob, base, service);
             console.log('Respuesta upload:', uploadRes);
 
-            // Extraer campos retornados (varían según la implementación)
             const originalName = uploadRes.originalName || uploadRes.originalname || base;
             const storedName = uploadRes.storedName || uploadRes.storedName || uploadRes.storedname || uploadRes.filename || uploadRes.stored || uploadRes.hash || uploadRes.stored_file;
             const returnedService = uploadRes.service || service;
 
-            // Luego crear registro en /files (usa originalName, service, storedName)
             console.log('Creando registro en /files para', originalName);
             const fileRecord = await createFileRecord(originalName, returnedService, storedName);
             console.log('File record creado:', fileRecord);
 
-            // Guardar id devuelto (puede venir como id, id_file, insertId, etc.)
             const id = fileRecord.id || fileRecord.id_file || fileRecord.insertId || (fileRecord[0] && (fileRecord[0].id || fileRecord[0].id_file));
             if (!id) {
                 console.warn('No se obtuvo id del registro de file. Guarda el objeto entero como referencia.');
@@ -139,17 +119,19 @@ async function runSeedAutomation() {
 
         console.log('Todos los archivos procesados. Mapeo:', fileIdMap);
 
-        // Ahora creamos productos
         console.log('Cargando seed_products.json...');
         const seedProducts = await fetchJson('./prods/seed_products.json');
 
         const productIdMap = {};
         for (let i = 0; i < seedProducts.length; i++) {
             const p = seedProducts[i];
-            // Si el seed hace referencia a un archivo por nombre (o varios), mapeamos a id_file / id_files
             const payload = Object.assign({}, p);
+            if (typeof p.category !== 'undefined') payload.category = p.category;
+            if (payload.type === 'item' && (typeof payload.category === 'undefined' || payload.category === null)) {
+                const sf = Array.isArray(seedFiles) && seedFiles[i] ? seedFiles[i] : null;
+                if (sf && typeof sf.category !== 'undefined') payload.category = sf.category;
+            }
             let fref = payload.filename || payload.file || payload.fileName;
-            // Si no viene fref, intentar usar el seedFiles por posición (están en el mismo orden)
             if (!fref && Array.isArray(seedFiles) && seedFiles[i]) {
                 fref = seedFiles[i].filename || seedFiles[i].file || seedFiles[i].name;
             }
@@ -166,7 +148,6 @@ async function runSeedAutomation() {
             console.log('Creando product con payload:', payload);
             const prodRes = await createProduct(payload);
             console.log('Producto creado:', prodRes);
-            // Extraer id
             const pid = prodRes.id_item || prodRes.id_product || prodRes.id || (prodRes[0] && (prodRes[0].id_item || prodRes[0].id_product || prodRes[0].id));
             if (p.name) productIdMap[p.name] = pid;
             else if (p.title) productIdMap[p.title] = pid;
@@ -174,24 +155,6 @@ async function runSeedAutomation() {
 
         console.log('Products creados. Mapeo:', productIdMap);
 
-        // Por compatibilidad, también procesamos seed_items.json (puede contener items tipo 'item')
-        try {
-            console.log('Cargando seed_items.json (opcional)...');
-            const seedItems = await fetchJson('./prods/seed_items.json');
-            for (const it of seedItems) {
-                const payload = Object.assign({}, it);
-                if (!payload.type) payload.type = 'item';
-                if (!payload.id_file && (payload.filename || payload.file)) {
-                    const base = mapKeyFromFilename(payload.filename || payload.file);
-                    if (fileIdMap[base]) payload.id_file = fileIdMap[base];
-                }
-                console.log('Creando item/product (type=item) payload:', payload);
-                const res = await createProduct(payload);
-                console.log('Item creado:', res);
-            }
-        } catch (err) {
-            console.log('No se encontró seed_items.json o hubo error procesándolo (se omite):', err.message);
-        }
 
         console.log('Automatización completa. Revisa la salida para verificar IDs y errores.');
     } catch (err) {
@@ -199,8 +162,6 @@ async function runSeedAutomation() {
     }
 }
 
-// Ejecutar automáticamente al cargar el script (si deseas desactivar, comenta la línea siguiente)
 runSeedAutomation();
 
-// También podemos exponer la función globalmente para llamarla manualmente desde la consola
 window.runSeedAutomation = runSeedAutomation;

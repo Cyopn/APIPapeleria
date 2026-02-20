@@ -7,7 +7,13 @@ const SpecialServiceSpiral = sequelize.define("special_service_spiral", {
         primaryKey: true,
         references: { model: "special_service", key: "id_special_service" }
     },
-    spiral_type: { type: DataTypes.ENUM("stapled", "glued", "sewn"), allowNull: false },
-}, { tableName: "special_service_spiral", timestamps: true });
+    spiral_type: {
+        type: DataTypes.ENUM("stapled", "glued", "sewn"),
+        allowNull: false
+    },
+}, {
+    tableName: "special_service_spiral",
+    timestamps: true
+});
 
 export default SpecialServiceSpiral;

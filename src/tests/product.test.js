@@ -36,16 +36,16 @@ describe('Product Service', () => {
     });
 
     test('create item product branch', async () => {
-        const input = { id: null, type: 'item', description: 'desc', price: 10, name: 'P1' };
+        const input = { id: null, type: 'item', description: 'desc', price: 10, name: 'P1', category: 'oficina' };
         ItemMock.findOne.mockResolvedValue(null);
         ProductMock.create.mockResolvedValue({ id_product: 50, type: 'item', description: input.description, price: input.price });
-        ItemMock.create.mockResolvedValue({ id_item: 50, name: input.name });
+        ItemMock.create.mockResolvedValue({ id_item: 50, name: input.name, category: input.category });
 
         const res = await productService.create(input);
 
         expect(ItemMock.findOne).toHaveBeenCalledWith({ where: { name: input.name } });
         expect(ProductMock.create).toHaveBeenCalled();
-        expect(ItemMock.create).toHaveBeenCalledWith({ id_item: 50, name: input.name });
+        expect(ItemMock.create).toHaveBeenCalledWith({ id_item: 50, name: input.name, category: input.category });
         expect(res).toHaveProperty('id_item', 50);
     });
 

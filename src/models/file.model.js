@@ -24,7 +24,7 @@ const File = sequelize.define("file", {
         defaultValue: "active",
     },
     type: {
-        type: DataTypes.STRING,
+        type: DataTypes.ENUM("image", "document", "other"),
         allowNull: false
     },
     filehash: {
@@ -32,6 +32,10 @@ const File = sequelize.define("file", {
         allowNull: false,
         unique: true
     }
-}, { tableName: "file", timestamps: true, underscored: true });
+}, {
+    tableName: "file",
+    timestamps: true,
+    underscored: true
+});
 
 export default File;

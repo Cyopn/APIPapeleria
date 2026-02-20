@@ -7,8 +7,17 @@ const SpecialServicePhoto = sequelize.define("special_service_photo", {
         primaryKey: true,
         references: { model: "special_service", key: "id_special_service" }
     },
-    photo_size: { type: DataTypes.STRING, allowNull: false },
-    paper_type: { type: DataTypes.ENUM("bright", "mate", "satiny"), allowNull: false },
-}, { tableName: "special_service_photo", timestamps: true });
+    photo_size: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    paper_type: {
+        type: DataTypes.ENUM("bright", "mate", "satiny"),
+        allowNull: false
+    },
+}, {
+    tableName: "special_service_photo",
+    timestamps: true
+});
 
 export default SpecialServicePhoto;

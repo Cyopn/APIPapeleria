@@ -11,7 +11,10 @@ const Product = sequelize.define("product", {
         type: DataTypes.ENUM("item", "print", "special_service",),
         allowNull: false,
     },
-    description: { type: DataTypes.STRING, allowNull: true },
+    description: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
     price: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
@@ -30,6 +33,10 @@ const Product = sequelize.define("product", {
         defaultValue: [],
         comment: 'Array de ids de archivos asociados'
     },
-}, { tableName: "product", timestamps: true, underscored: true });
+}, {
+    tableName: "product",
+    timestamps: true,
+    underscored: true
+});
 
 export default Product;

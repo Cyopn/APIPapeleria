@@ -1,6 +1,5 @@
 import { Sequelize } from 'sequelize';
 
-
 const sequelize = new Sequelize(
     process.env.DB_NAME,
     process.env.DB_USER,
@@ -8,7 +7,9 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST,
     dialect: 'mysql',
     port: process.env.DB_PORT,
+    timezone: process.env.DB_TIMEZONE || '-06:00',
     dialectOptions: {
+        timezone: process.env.DB_TIMEZONE || '-06:00',
         ssl: {
             require: true,
             rejectUnauthorized: false,
