@@ -108,11 +108,39 @@ class ProductService {
                     } else {
                         p.dataValues.files = [];
                     }
+
+                    try {
+                        const singleId = p.id_file ?? (p.dataValues && p.dataValues.id_file) ?? null;
+                        const singleNum = singleId !== null ? Number(singleId) : null;
+                        if (singleNum && !isNaN(singleNum)) {
+                            const singleFile = await File.findByPk(singleNum);
+                            p.dataValues.file = singleFile || null;
+                        } else {
+                            p.dataValues.file = null;
+                        }
+                    } catch (e) {
+                        p.dataValues.file = null;
+                    }
+
+                    try {
+                        const singleId = p.id_file ?? (p.dataValues && p.dataValues.id_file) ?? null;
+                        const singleNum = singleId !== null ? Number(singleId) : null;
+                        if (singleNum && !isNaN(singleNum)) {
+                            const singleFile = await File.findByPk(singleNum);
+                            p.dataValues.file = singleFile || null;
+                        } else {
+                            p.dataValues.file = null;
+                        }
+                    } catch (e) {
+                        p.dataValues.file = null;
+                    }
                 } else {
                     p.dataValues.files = [];
+                    p.dataValues.file = null;
                 }
             } catch (e) {
                 p.dataValues.files = [];
+                p.dataValues.file = null;
             }
         }
 
@@ -150,9 +178,11 @@ class ProductService {
                     }
                 } else {
                     p.dataValues.files = [];
+                    p.dataValues.file = null;
                 }
             } catch (e) {
                 p.dataValues.files = [];
+                p.dataValues.file = null;
             }
         }
 
@@ -207,8 +237,27 @@ class ProductService {
             const productUpdates = {};
             if (typeof description !== 'undefined') productUpdates.description = description;
             if (typeof price !== 'undefined') productUpdates.price = price;
-            if (typeof id_file !== 'undefined') productUpdates.id_file = id_file;
-            if (typeof id_files !== 'undefined') productUpdates.id_files = id_files;
+
+            if (typeof id_files !== 'undefined') {
+                productUpdates.id_files = id_files;
+            } else if (typeof id_file !== 'undefined') {
+                let existing = product.id_files ?? (product.dataValues && product.dataValues.id_files) ?? null;
+                let parsed = [];
+                try {
+                    if (existing) parsed = Array.isArray(existing) ? existing.slice() : (typeof existing === 'string' ? JSON.parse(existing) : [existing]);
+                } catch (e) {
+                    parsed = existing ? [existing] : [];
+                }
+                const newId = Number(id_file);
+                if (!isNaN(newId)) {
+                    parsed = parsed.map(n => Number(n)).filter(n => !isNaN(n));
+                    if (!parsed.includes(newId)) parsed.push(newId);
+                    productUpdates.id_files = parsed;
+                    productUpdates.id_file = newId;
+                } else {
+                    productUpdates.id_file = id_file;
+                }
+            }
             if (Object.keys(productUpdates).length) {
                 await Product.update(productUpdates, { where: { id_product: id }, transaction: t });
             }
@@ -216,8 +265,10 @@ class ProductService {
             const prodType = product.type;
             if (prodType === 'item') {
                 const itemUpdates = {};
-                if (typeof payload.name !== 'undefined') itemUpdates.name = payload.name;
-                if (typeof payload.category !== 'undefined') itemUpdates.category = payload.category;
+                const itemData = payload.item ?? payload;
+                if (typeof itemData.name !== 'undefined') itemUpdates.name = itemData.name;
+                if (typeof itemData.available !== 'undefined') itemUpdates.available = itemData.available;
+                if (typeof itemData.category !== 'undefined') itemUpdates.category = itemData.category;
                 if (Object.keys(itemUpdates).length) await Item.update(itemUpdates, { where: { id_item: id }, transaction: t });
             } else if (prodType === 'print') {
                 const printUpdates = {};

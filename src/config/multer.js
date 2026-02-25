@@ -26,6 +26,7 @@ const storage = multer.diskStorage({
 function fileFilter(req, file, cb) {
     const allowedMimes = [
         "application/pdf",
+        "application/octet-stream",
         "application/msword",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "image/png",
