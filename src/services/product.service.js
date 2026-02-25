@@ -109,6 +109,20 @@ class ProductService {
                         p.dataValues.files = [];
                     }
 
+                    // Añadir también el archivo único referenciado por `id_file`
+                    try {
+                        const singleId = p.id_file ?? (p.dataValues && p.dataValues.id_file) ?? null;
+                        const singleNum = singleId !== null ? Number(singleId) : null;
+                        if (singleNum && !isNaN(singleNum)) {
+                            const singleFile = await File.findByPk(singleNum);
+                            p.dataValues.file = singleFile || null;
+                        } else {
+                            p.dataValues.file = null;
+                        }
+                    } catch (e) {
+                        p.dataValues.file = null;
+                    }
+
                     try {
                         const singleId = p.id_file ?? (p.dataValues && p.dataValues.id_file) ?? null;
                         const singleNum = singleId !== null ? Number(singleId) : null;
@@ -175,6 +189,19 @@ class ProductService {
                         p.dataValues.files = parsed.map(id => filesById.get(id) || null).filter(f => f !== null);
                     } else {
                         p.dataValues.files = [];
+                    }
+
+                    try {
+                        const singleId = p.id_file ?? (p.dataValues && p.dataValues.id_file) ?? null;
+                        const singleNum = singleId !== null ? Number(singleId) : null;
+                        if (singleNum && !isNaN(singleNum)) {
+                            const singleFile = await File.findByPk(singleNum);
+                            p.dataValues.file = singleFile || null;
+                        } else {
+                            p.dataValues.file = null;
+                        }
+                    } catch (e) {
+                        p.dataValues.file = null;
                     }
                 } else {
                     p.dataValues.files = [];
