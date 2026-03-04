@@ -43,6 +43,16 @@ async function login(credentials) {
   return body;
 }
 
+// PUT /users/:id/change-password
+async function changePassword(id, currentPassword, newPassword) {
+  const res = await fetch(`${baseUrl}/users/${id}/change-password`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ currentPassword, newPassword })
+  });
+  return res.json();
+}
+
 // GET /users
 async function listUsers() {
   const res = await fetch(`${baseUrl}/users`, { headers: { Authorization: `Bearer ${token}` } });
@@ -75,6 +85,7 @@ async function deleteUser(id) {
 Ejemplo de payloads rápidos:
 - Crear usuario: { username, names, lastnames, email, password, role }
 - Update usuario: { username?, names?, lastnames?, email?, role? }
+- Cambio de contraseña: { currentPassword, newPassword }
 
 ---
 

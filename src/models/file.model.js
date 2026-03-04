@@ -24,7 +24,7 @@ const File = sequelize.define("file", {
         defaultValue: "active",
     },
     type: {
-        type: DataTypes.ENUM("image", "document", "other"),
+        type: DataTypes.ENUM("image", "document", "other", "avatar"),
         allowNull: false
     },
     filehash: {

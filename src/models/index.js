@@ -13,6 +13,7 @@ import Transaction from "./transaction.model.js";
 import DetailTransaction from "./detail_transaction.model.js";
 import File from "./file.model.js";
 import QRCode from "./qr_code.model.js";
+import Printer from "./printer.model.js";
 
 Product.hasOne(Item, {
     foreignKey: "id_item",
@@ -32,6 +33,16 @@ Product.hasOne(Print, {
 Print.belongsTo(Product, {
     foreignKey: "id_print",
     as: "product"
+});
+
+Printer.hasMany(Print, {
+    foreignKey: "printer_id",
+    as: "prints"
+});
+
+Print.belongsTo(Printer, {
+    foreignKey: "printer_id",
+    as: "printer"
 });
 
 Product.hasOne(SpecialService, {
@@ -155,6 +166,7 @@ const db = {
     Product,
     Item,
     Print,
+    Printer,
     SpecialService,
     SpecialServiceData,
     SpecialServiceBound,

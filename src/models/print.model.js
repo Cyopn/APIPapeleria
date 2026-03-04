@@ -37,6 +37,16 @@ const Print = sequelize.define("print", {
         type: DataTypes.TEXT,
         allowNull: true
     },
+    id_printer: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: "printer",
+            key: "id_printer"
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL"
+    },
     status: {
         type: DataTypes.ENUM("pending", "in_progress", "completed"),
         allowNull: false,
