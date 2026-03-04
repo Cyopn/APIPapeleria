@@ -33,8 +33,12 @@ export const getUser = async (req, res, next) => {
 export const updateUser = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const user = await userService.update(id, req.body);
-        res.json(user);
+         const baseUrl = `${req.protocol}://${req.get("host")}`;
+
+        const result = await userService.update(id, req.body, {
+            baseUrl
+        });
+        res.json(result);
     } catch (err) {
         next(err);
     }

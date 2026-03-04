@@ -54,12 +54,25 @@ class UserService {
         return this.buildUserWithAvatar(user, baseUrl);
     }
 
-    async update(id, { username, names, lastnames, email, password, role, phone }) {
+    async update(id, { username, names, lastnames, email, password, role, phone }, { baseUrl = "" } = {}) {
         const user = await User.findByPk(id);
         if (!user) throw new Error("Usuario no encontrado");
         const hashed = password ? await bcrypt.hash(password, 10) : user.password;
         await User.update({ username, names, lastnames, email, password: hashed, role, phone }, { where: { id_user: id } });
-        return this.findOne(id);
+
+        const updatedUser = await User.findByPk(id, {
+            include: [this.getAvatarInclude()]
+        });
+
+        const resolvedToken = jwt.sign(
+            { id: updatedUser.id_user || updatedUser.id, username: updatedUser.username },
+            env.JWT_SECRET,
+        );
+
+        return {
+            token: resolvedToken,
+            user: this.buildUserWithAvatar(updatedUser, baseUrl)
+        };
     }
 
     async remove(id) {
