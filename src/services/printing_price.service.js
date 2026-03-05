@@ -1,8 +1,16 @@
-import printingPrice, { analyzePdfPages } from '../utils/printing_price.js';
+import printingPrice, { analyzePdfPagesNoCanvas, getPdfPageCount } from '../utils/printing_price.js';
 import fileManagerService from './file_manager.service.js';
 import { PRICING } from '../config/env.js'
 
 class PrintingPriceService {
+    normalizeColorMode(value) {
+        const v = String(value || '').trim().toLowerCase();
+        if (!v) return '';
+        if (v === 'color' || v === 'fullcolor' || v === 'full_color' || v === 'colour') return 'color';
+        if (v === 'bw' || v === 'b/w' || v === 'bn' || v === 'byn' || v.includes('blanco') || v.includes('negro')) return 'bw';
+        return v;
+    }
+
     async calculateFromStoredFile(filename, service) {
         if (!filename) throw new Error('filename requerido');
         if (Array.isArray(filename)) {
@@ -21,10 +29,13 @@ class PrintingPriceService {
     async calculateSingleFromStoredFile(filename, options = {}, service) {
         if (!filename) throw new Error('filename requerido');
         const filePath = await fileManagerService.getFilePath(service, filename);
-        const pageCosts = await analyzePdfPages(filePath);
+        const requestedColorMode = this.normalizeColorMode(options.colorModes);
+        const pageCosts = requestedColorMode === 'color'
+            ? await analyzePdfPagesNoCanvas(filePath)
+            : Array.from({ length: await getPdfPageCount(filePath) }, () => 0);
         if (!Array.isArray(pageCosts) || pageCosts.length === 0) return { price: 0, breakdown: {} };
 
-        const colorMode = options.colorModes;
+        const colorMode = this.normalizeColorMode(options.colorModes);
         const paperSize = options.paperSizes;
         const paperType = options.paperType;
         const range = options.ranges;

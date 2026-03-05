@@ -5,7 +5,9 @@ await jest.unstable_mockModule('../services/file_manager.service.js', () => ({
 }));
 
 await jest.unstable_mockModule('../utils/printing_price.js', () => ({
-    default: jest.fn().mockResolvedValue(3.5)
+    default: jest.fn().mockResolvedValue(3.5),
+    analyzePdfPages: jest.fn().mockResolvedValue([1, 1, 1]),
+    getPdfPageCount: jest.fn().mockResolvedValue(3)
 }));
 
 const { default: printingPriceService } = await import('../services/printing_price.service.js');

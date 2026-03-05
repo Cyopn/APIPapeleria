@@ -1,6 +1,78 @@
 import fs from 'fs';
 import sharp from 'sharp';
 
+const getPdfPageCount = async (filename) => {
+    const data = new Uint8Array(fs.readFileSync(filename));
+    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const loadingTask = pdfjsLib.getDocument({ data, disableWorker: true });
+    const pdfDocument = await loadingTask.promise;
+    return Number(pdfDocument.numPages || 0);
+};
+
+const analyzePdfPagesNoCanvas = async (filename) => {
+    const BW_PRICE_PER_PAGE = Number(process.env.BW_PRICE_PER_PAGE);
+    const COLOR_STANDARD_PRICE = Number(process.env.COLOR_STANDARD_PRICE);
+
+    try {
+        const data = new Uint8Array(fs.readFileSync(filename));
+        const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+        const loadingTask = pdfjsLib.getDocument({ data, disableWorker: true });
+        const pdfDocument = await loadingTask.promise;
+        const OPS = pdfjsLib.OPS || {};
+
+        const pageCosts = [];
+        for (let p = 1; p <= pdfDocument.numPages; p++) {
+            let isColorPage = false;
+            const page = await pdfDocument.getPage(p);
+            const opList = await page.getOperatorList();
+            const fnArray = opList.fnArray || [];
+            const argsArray = opList.argsArray || [];
+
+            for (let i = 0; i < fnArray.length; i++) {
+                const fn = fnArray[i];
+                const args = argsArray[i] || [];
+
+                if (fn === OPS.setFillRGBColor || fn === OPS.setStrokeRGBColor) {
+                    const r = Number(args[0] || 0);
+                    const g = Number(args[1] || 0);
+                    const b = Number(args[2] || 0);
+                    if (!(r === g && g === b)) {
+                        isColorPage = true;
+                        break;
+                    }
+                }
+
+                if (fn === OPS.setFillCMYKColor || fn === OPS.setStrokeCMYKColor) {
+                    const c = Number(args[0] || 0);
+                    const m = Number(args[1] || 0);
+                    const y = Number(args[2] || 0);
+                    if (c !== 0 || m !== 0 || y !== 0) {
+                        isColorPage = true;
+                        break;
+                    }
+                }
+
+                if (
+                    fn === OPS.setFillColorSpace ||
+                    fn === OPS.setStrokeColorSpace ||
+                    fn === OPS.setFillColorN ||
+                    fn === OPS.setStrokeColorN
+                ) {
+                    isColorPage = true;
+                    break;
+                }
+            }
+
+            pageCosts.push(isColorPage ? COLOR_STANDARD_PRICE : BW_PRICE_PER_PAGE);
+        }
+
+        return pageCosts;
+    } catch (err) {
+        const pages = await getPdfPageCount(filename);
+        return Array.from({ length: pages }, () => BW_PRICE_PER_PAGE);
+    }
+};
+
 const analyzePdfPages = async (filename) => {
     const TARGET_WIDTH = 1024;
 
@@ -74,9 +146,10 @@ const analyzePdfPages = async (filename) => {
             const loadingTask = pdfjsLib.getDocument({ data, disableWorker: true });
             const pdfDocument = await loadingTask.promise;
             const numPages = pdfDocument.numPages;
-            const pageCosts = await Promise.all(
-                Array.from({ length: numPages }).map(async (_, idx) => {
-                    const pageNumber = idx + 1;
+            const pageCosts = [];
+            for (let idx = 0; idx < numPages; idx++) {
+                const pageNumber = idx + 1;
+                try {
                     const page = await pdfDocument.getPage(pageNumber);
                     const viewport = page.getViewport({ scale: 1 });
                     const scale = TARGET_WIDTH / viewport.width;
@@ -85,9 +158,12 @@ const analyzePdfPages = async (filename) => {
                     const ctx = canvas.getContext('2d');
                     await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
                     const pngBuffer = canvas.toBuffer('image/png');
-                    return analyzePngBuffer(pngBuffer);
-                })
-            );
+                    pageCosts.push(await analyzePngBuffer(pngBuffer));
+                } catch (pageErr) {
+                    // Keep pricing endpoint responsive even if a PDF page fails to render in Node canvas.
+                    pageCosts.push(BW_PRICE_PER_PAGE);
+                }
+            }
             return pageCosts;
         } finally {
             try { if (typeof __orig_console_warn === 'function') console.warn = __orig_console_warn; } catch (e) { }
@@ -234,15 +310,22 @@ const analyzePdfPages = async (filename) => {
             return pageCosts;
         } catch (puppErr) {
             console.error('printingPrice - both pdfjs/node-canvas and puppeteer fallbacks failed:', nodeErr, puppErr);
+            try {
+                const pages = await getPdfPageCount(filename);
+                if (pages > 0) {
+                    return Array.from({ length: pages }, () => BW_PRICE_PER_PAGE);
+                }
+            } catch (countErr) {
+            }
             throw puppErr;
         }
     };
 };
 
 const printingPrice = async (filename) => {
-    const pageCosts = await analyzePdfPages(filename);
+    const pageCosts = await analyzePdfPagesNoCanvas(filename);
     return Array.isArray(pageCosts) ? pageCosts.reduce((a, b) => a + b, 0) : pageCosts;
 };
 
-export { analyzePdfPages };
+export { analyzePdfPages, analyzePdfPagesNoCanvas, getPdfPageCount };
 export default printingPrice;

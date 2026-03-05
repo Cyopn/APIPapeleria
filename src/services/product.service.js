@@ -26,7 +26,7 @@ class ProductService {
                 const product = await Product.create({ type: type, description: description, price: price, id_file, id_files }, { transaction: t });
                 const item = await Item.create({ id_item: product.id_product, name: name, category: category }, { transaction: t });
                 await t.commit();
-                return { id_item: product.id_product, name: item.name, category: item.category, type: product.type, description: product.description, price: product.price }
+                return { id_product: product.id_product, name: item.name, category: item.category, type: product.type, description: product.description, price: product.price }
             } else if (type === "print") {
                 const product = await Product.create({ type: type, description: description, price: price, id_file, id_files }, { transaction: t });
                 const print = await Print.create({
@@ -41,7 +41,7 @@ class ProductService {
                     status: typeof status !== 'undefined' ? status : undefined
                 }, { transaction: t });
                 await t.commit();
-                return { id_item: product.id_product, type_print: print.print_type, type_paper: print.paper_type, status: print.status, type: product.type, description: product.description, price: product.price }
+                return { id_product: product.id_product, type_print: print.print_type, type_paper: print.paper_type, status: print.status, type: product.type, description: product.description, price: product.price }
             } else {
                 const product = await Product.create({ type: type, description: description, price: price, id_file, id_files }, { transaction: t });
                 const sp_services = await SpecialService.create({ id_special_service: product.id_product, type: service_type, mode: mode, delivery: delivery, observations: observations }, { transaction: t });
@@ -72,7 +72,7 @@ class ProductService {
                 }
 
                 await t.commit();
-                return { id_item: product.id_product, type: product.type, description: product.description, price: product.price }
+                return { id_product: product.id_product, type: product.type, description: product.description, price: product.price }
             }
         } catch (err) {
             await t.rollback();

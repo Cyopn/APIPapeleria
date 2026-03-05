@@ -3,6 +3,7 @@ import QRCodeService from "../services/qr_code.service.js";
 
 export const createTransaction = async (req, res, next) => {
     try {
+        console.log('Creando transacción con datos:', req.body);
         const transaction = await transactionService.create(req.body);
         res.status(201).json(transaction);
     } catch (err) {

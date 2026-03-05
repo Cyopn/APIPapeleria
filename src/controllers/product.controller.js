@@ -2,6 +2,7 @@
 
 export const createProduct = async (req, res, next) => {
     try {
+        console.log('Creando producto con datos:', req.body);
         const payload = normalizeProductPayload(req.body);
         const product = await productService.create(payload);
         res.status(201).json(product);
