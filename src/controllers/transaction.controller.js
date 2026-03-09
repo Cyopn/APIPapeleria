@@ -20,6 +20,15 @@ export const listTransactions = async (req, res, next) => {
     }
 };
 
+export const listTransactionsDetails = async (req, res, next) => {
+    try {
+        const transactions = await transactionService.findAllDetails();
+        res.json(transactions);
+    } catch (err) {
+        next(err);
+    }
+};
+
 export const getTransaction = async (req, res, next) => {
     try {
         const { id } = req.params;

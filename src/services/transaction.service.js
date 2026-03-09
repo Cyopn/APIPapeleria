@@ -1,9 +1,38 @@
 ﻿import Transaction from '../models/transaction.model.js';
 import DetailTransaction from '../models/detail_transaction.model.js';
 import Product from '../models/product.model.js';
+import Item from '../models/item.model.js';
+import Print from '../models/print.model.js';
+import SpecialService from '../models/sp_service.model.js';
+import SpecialServiceData from '../models/sp_service.data.model.js';
+import SpecialServiceBound from '../models/sp_service.bound.model.js';
+import SpecialServicePhoto from '../models/sp_service.photo.model.js';
+import SpecialServiceSpiral from '../models/sp_service.spiral.model.js';
+import SpecialServiceDocument from '../models/sp_service.document.model.js';
 import QRCode from '../models/qr_code.model.js';
+import User from '../models/user.model.js';
 import sequelize from '../config/db.js';
 import QRCodeService from './qr_code.service.js';
+
+const detailProductInclude = {
+    model: Product,
+    as: 'product',
+    include: [
+        { model: Item, as: 'item' },
+        { model: Print, as: 'print' },
+        {
+            model: SpecialService,
+            as: 'special_service',
+            include: [
+                { model: SpecialServiceData, as: 'data' },
+                { model: SpecialServiceBound, as: 'bound' },
+                { model: SpecialServicePhoto, as: 'photo' },
+                { model: SpecialServiceSpiral, as: 'spiral' },
+                { model: SpecialServiceDocument, as: 'document' }
+            ]
+        }
+    ]
+};
 
 class TransactionService {
     async create({ type, date, id_user, details, status, payment_method }) {
@@ -54,6 +83,9 @@ class TransactionService {
     async findAll() {
         return Transaction.findAll({
             include: [{
+                model: User,
+                as: 'user'
+            }, {
                 model: DetailTransaction,
                 as: 'details',
                 include: [{
@@ -67,15 +99,25 @@ class TransactionService {
         });
     }
 
+    async findAllDetails() {
+        return Transaction.findAll({
+            include: [{
+                model: DetailTransaction,
+                as: 'details',
+                include: [detailProductInclude]
+            }, {
+                model: QRCode,
+                as: 'qr_code'
+            }]
+        });
+    }
+
     async findOne(id) {
         const transaction = await Transaction.findByPk(id, {
             include: [{
                 model: DetailTransaction,
                 as: 'details',
-                include: [{
-                    model: Product,
-                    as: 'product'
-                }]
+                include: [detailProductInclude]
             }, {
                 model: QRCode,
                 as: 'qr_code'

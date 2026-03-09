@@ -19,6 +19,7 @@
     "seed:node": "node ./app/run_seed_node.js"
   },
   "dependencies": {
+    "@snazzah/davey": "^0.1.10",
     "bcrypt": "^6.0.0",
     "canvas": "^3.2.1",
     "cors": "^2.8.6",
