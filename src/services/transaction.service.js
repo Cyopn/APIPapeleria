@@ -14,6 +14,7 @@ import File from '../models/file.model.js';
 import User from '../models/user.model.js';
 import sequelize from '../config/db.js';
 import QRCodeService from './qr_code.service.js';
+import notificationService from './notification.service.js';
 
 const FILE_STATUSES = ['active', 'inactive'];
 
@@ -284,6 +285,14 @@ class TransactionService {
                 throw new Error('Transacción no encontrada');
             }
 
+            const previousValues = {
+                type: transaction.type,
+                date: transaction.date,
+                id_user: transaction.id_user,
+                status: transaction.status,
+                payment_method: transaction.payment_method
+            };
+
             await transaction.update({
                 type,
                 date,
@@ -308,6 +317,25 @@ class TransactionService {
             );
 
             await Promise.all(detailPromises);
+
+            const changedFields = [];
+            if (typeof type !== 'undefined' && previousValues.type !== type) changedFields.push('type');
+            if (typeof date !== 'undefined' && String(previousValues.date) !== String(date)) changedFields.push('date');
+            if (typeof id_user !== 'undefined' && Number(previousValues.id_user) !== Number(id_user)) changedFields.push('id_user');
+            if (typeof status !== 'undefined' && previousValues.status !== status) changedFields.push('status');
+            if (typeof payment_method !== 'undefined' && previousValues.payment_method !== payment_method) changedFields.push('payment_method');
+            if (Array.isArray(details)) changedFields.push('details');
+
+            await notificationService.create({
+                type: 'transaction_updated',
+                message: `La transacción ${id} fue actualizada`,
+                id_user: transaction.id_user,
+                metadata: {
+                    id_transaction: Number(id),
+                    changed_fields: [...new Set(changedFields)]
+                }
+            }, { transaction: t });
+
             await t.commit();
 
             const qrData = await QRCodeService.updateQRForTransaction({
@@ -421,6 +449,11 @@ class TransactionService {
             }
 
             if (printIds.size > 0) {
+                const printsToUpdate = await Print.findAll({
+                    where: { id_print: [...printIds] },
+                    transaction: t
+                });
+
                 await Print.update(
                     { status: 'completed' },
                     {
@@ -428,6 +461,20 @@ class TransactionService {
                         transaction: t
                     }
                 );
+
+                for (const print of printsToUpdate) {
+                    if (print.status === 'completed') continue;
+                    await notificationService.create({
+                        type: 'print_status_changed',
+                        message: `El status del print ${print.id_print} cambió de ${print.status} a completed`,
+                        metadata: {
+                            id_print: print.id_print,
+                            previous_status: print.status,
+                            new_status: 'completed',
+                            id_transaction: transaction.id_transaction
+                        }
+                    }, { transaction: t });
+                }
             }
 
             await t.commit();

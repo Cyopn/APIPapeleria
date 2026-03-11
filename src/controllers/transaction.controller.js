@@ -120,6 +120,8 @@ export const scanQR = async (req, res, next) => {
     try {
         const { qrData, base64Data } = req.body;
         let qrContent;
+        let parsedQRData;
+
         if (base64Data) {
             try {
                 const cleanBase64 = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
@@ -138,42 +140,65 @@ export const scanQR = async (req, res, next) => {
             qrContent = qrData;
         }
 
-        if (!qrContent) {
+        if (!qrContent && req.body && typeof req.body === 'object') {
+            const hasDirectPayload = (
+                typeof req.body.transaction_id !== 'undefined' ||
+                typeof req.body.id_transaction !== 'undefined'
+            );
+
+            if (hasDirectPayload) {
+                parsedQRData = req.body;
+            }
+        }
+
+        if (!qrContent && !parsedQRData) {
             return res.status(400).json({
                 error: 'Se requiere qrData (contenido del QR como texto) o base64Data'
             });
         }
-        let parsedQRData;
-        try {
-            parsedQRData = typeof qrContent === 'string' ? JSON.parse(qrContent) : qrContent;
-        } catch (error) {
-            return res.status(400).json({
-                error: 'El contenido del QR no es un JSON válido',
-                details: error.message
-            });
+
+        if (!parsedQRData) {
+            try {
+                parsedQRData = typeof qrContent === 'string' ? JSON.parse(qrContent) : qrContent;
+            } catch (error) {
+                return res.status(400).json({
+                    error: 'El contenido del QR no es un JSON válido',
+                    details: error.message
+                });
+            }
         }
 
-        if (!parsedQRData.transaction_id) {
+        const normalizedQRData = {
+            transaction_id: parsedQRData.transaction_id ?? parsedQRData.id_transaction,
+            user_id: parsedQRData.user_id ?? parsedQRData.id_user,
+            type: parsedQRData.type,
+            total: parsedQRData.total,
+            date: parsedQRData.date,
+            status: parsedQRData.status,
+            timestamp: parsedQRData.timestamp
+        };
+
+        if (!normalizedQRData.transaction_id) {
             return res.status(400).json({
                 error: 'El QR no contiene un transaction_id válido',
                 received: parsedQRData
             });
         }
 
-        const transaction = await transactionService.findOne(parsedQRData.transaction_id);
+        const transaction = await transactionService.findOne(normalizedQRData.transaction_id);
 
         const isValid = (
-            transaction.id_transaction === parsedQRData.transaction_id &&
-            transaction.id_user === parsedQRData.user_id &&
-            transaction.type === parsedQRData.type &&
-            parseFloat(transaction.total) === parsedQRData.total &&
-            transaction.status === parsedQRData.status
+            Number(transaction.id_transaction) === Number(normalizedQRData.transaction_id) &&
+            Number(transaction.id_user) === Number(normalizedQRData.user_id) &&
+            transaction.type === normalizedQRData.type &&
+            parseFloat(transaction.total) === Number(normalizedQRData.total) &&
+            transaction.status === normalizedQRData.status
         );
 
         if (!isValid) {
             return res.status(400).json({
                 error: 'Los datos del QR no coinciden con la transacción actual',
-                qr_data: parsedQRData,
+                qr_data: normalizedQRData,
                 current_transaction: {
                     id_transaction: transaction.id_transaction,
                     id_user: transaction.id_user,
@@ -184,12 +209,12 @@ export const scanQR = async (req, res, next) => {
             });
         }
 
-        await QRCodeService.recordQRScan(parsedQRData.transaction_id);
+        await QRCodeService.recordQRScan(normalizedQRData.transaction_id);
         res.json({
             success: true,
             message: 'QR escaneado exitosamente',
             scanned_at: new Date().toISOString(),
-            qr_data: parsedQRData,
+            qr_data: normalizedQRData,
             transaction: transaction
         });
 

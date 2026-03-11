@@ -1,5 +1,18 @@
 import QRCodeService from '../services/qr_code.service.js';
 
+export const rebuildAllQRCodes = async (req, res, next) => {
+    try {
+        const result = await QRCodeService.rebuildAllQRCodes();
+        res.json({
+            success: true,
+            message: 'Reconstrucción de QRs finalizada',
+            ...result
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 export const getQRStats = async (req, res, next) => {
     try {
         const stats = await QRCodeService.getQRStats();

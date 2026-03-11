@@ -10,6 +10,7 @@ import SpecialServiceDocument from "../models/sp_service.document.model.js";
 import SpecialServicePhoto from "../models/sp_service.photo.model.js";
 import DetailTransaction from "../models/detail_transaction.model.js";
 import sequelize from "../config/db.js";
+import notificationService from "./notification.service.js";
 
 const SPECIAL_SERVICE_STATUSES = ['pending', 'in_progress', 'completed'];
 
@@ -272,6 +273,9 @@ class ProductService {
             const product = await Product.findByPk(id, { transaction: t });
             if (product === null) throw new Error("El producto no existe")
 
+            let printStatusChange = null;
+            let specialServiceStatusChange = null;
+
             const { description, price, id_file, id_files } = payload;
             const productUpdates = {};
             if (typeof description !== 'undefined') productUpdates.description = description;
@@ -311,6 +315,7 @@ class ProductService {
                 if (Object.keys(itemUpdates).length) await Item.update(itemUpdates, { where: { id_item: id }, transaction: t });
             } else if (prodType === 'print') {
                 const printUpdates = {};
+                const currentPrint = await Print.findByPk(id, { transaction: t });
                 if (typeof payload.type_print !== 'undefined') printUpdates.print_type = payload.type_print;
                 if (typeof payload.paper_type !== 'undefined') printUpdates.paper_type = payload.paper_type;
                 if (typeof payload.paper_size !== 'undefined') printUpdates.paper_size = payload.paper_size;
@@ -318,10 +323,19 @@ class ProductService {
                 if (typeof payload.both_sides !== 'undefined') printUpdates.both_sides = payload.both_sides;
                 if (typeof payload.print_amount !== 'undefined') printUpdates.amount = payload.print_amount;
                 if (typeof payload.observations !== 'undefined') printUpdates.observations = payload.observations;
-                if (typeof payload.status !== 'undefined') printUpdates.status = payload.status;
+                if (typeof payload.status !== 'undefined') {
+                    printUpdates.status = payload.status;
+                    if (currentPrint && currentPrint.status !== payload.status) {
+                        printStatusChange = {
+                            previous_status: currentPrint.status,
+                            new_status: payload.status
+                        };
+                    }
+                }
                 if (Object.keys(printUpdates).length) await Print.update(printUpdates, { where: { id_print: id }, transaction: t });
             } else if (prodType === 'special_service') {
                 const ssUpdates = {};
+                const currentSpecialService = await SpecialService.findByPk(id, { transaction: t });
                 if (typeof payload.service_type !== 'undefined') ssUpdates.type = payload.service_type;
                 if (typeof payload.mode !== 'undefined') ssUpdates.mode = payload.mode;
                 if (typeof payload.status !== 'undefined') {
@@ -329,6 +343,12 @@ class ProductService {
                         throw new Error("Status inválido para special_service. Valores permitidos: pending, in_progress, completed");
                     }
                     ssUpdates.status = payload.status;
+                    if (currentSpecialService && currentSpecialService.status !== payload.status) {
+                        specialServiceStatusChange = {
+                            previous_status: currentSpecialService.status,
+                            new_status: payload.status
+                        };
+                    }
                 }
                 if (Object.keys(ssUpdates).length) await SpecialService.update(ssUpdates, { where: { id_special_service: id }, transaction: t });
 
@@ -373,6 +393,30 @@ class ProductService {
                     if (existsPhoto) await SpecialServicePhoto.update(photoUpdates, { where: { id_special_service_photo: id }, transaction: t });
                     else await SpecialServicePhoto.create(Object.assign({ id_special_service_photo: id }, photoUpdates), { transaction: t });
                 }
+            }
+
+            if (printStatusChange) {
+                await notificationService.create({
+                    type: 'print_status_changed',
+                    message: `El status del print ${id} cambió de ${printStatusChange.previous_status} a ${printStatusChange.new_status}`,
+                    metadata: {
+                        id_print: id,
+                        previous_status: printStatusChange.previous_status,
+                        new_status: printStatusChange.new_status
+                    }
+                }, { transaction: t });
+            }
+
+            if (specialServiceStatusChange) {
+                await notificationService.create({
+                    type: 'special_service_status_changed',
+                    message: `El status del special_service ${id} cambió de ${specialServiceStatusChange.previous_status} a ${specialServiceStatusChange.new_status}`,
+                    metadata: {
+                        id_special_service: id,
+                        previous_status: specialServiceStatusChange.previous_status,
+                        new_status: specialServiceStatusChange.new_status
+                    }
+                }, { transaction: t });
             }
 
             await t.commit();
@@ -420,6 +464,11 @@ class ProductService {
                 throw new Error("El producto no es de tipo special_service");
             }
 
+            const currentSpecialService = await SpecialService.findByPk(id, { transaction: t });
+            if (!currentSpecialService) {
+                throw new Error("No se encontró el detalle special_service para el producto");
+            }
+
             const [updatedRows] = await SpecialService.update(
                 { status },
                 { where: { id_special_service: id }, transaction: t }
@@ -427,6 +476,18 @@ class ProductService {
 
             if (!updatedRows) {
                 throw new Error("No se encontró el detalle special_service para el producto");
+            }
+
+            if (currentSpecialService.status !== status) {
+                await notificationService.create({
+                    type: 'special_service_status_changed',
+                    message: `El status del special_service ${id} cambió de ${currentSpecialService.status} a ${status}`,
+                    metadata: {
+                        id_special_service: id,
+                        previous_status: currentSpecialService.status,
+                        new_status: status
+                    }
+                }, { transaction: t });
             }
 
             await t.commit();

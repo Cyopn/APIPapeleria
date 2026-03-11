@@ -4,6 +4,50 @@ import QRGenerator from '../utils/qr_generator.js';
 
 class QRCodeService {
 
+    async rebuildAllQRCodes() {
+        try {
+            const transactions = await Transaction.findAll();
+
+            const results = {
+                total_transactions: transactions.length,
+                rebuilt_count: 0,
+                failed_count: 0,
+                rebuilt_transactions: [],
+                failed_transactions: []
+            };
+
+            for (const transaction of transactions) {
+                try {
+                    const qrData = await this.createQRForTransaction({
+                        id_transaction: transaction.id_transaction,
+                        id_user: transaction.id_user,
+                        type: transaction.type,
+                        total: transaction.total,
+                        date: transaction.date,
+                        status: transaction.status
+                    });
+
+                    results.rebuilt_count += 1;
+                    results.rebuilt_transactions.push({
+                        id_transaction: transaction.id_transaction,
+                        id_qr: qrData.id_qr
+                    });
+                } catch (error) {
+                    results.failed_count += 1;
+                    results.failed_transactions.push({
+                        id_transaction: transaction.id_transaction,
+                        error: error.message
+                    });
+                }
+            }
+
+            return results;
+        } catch (error) {
+            console.error('Error reconstruyendo QRs:', error);
+            throw new Error('Error al reconstruir los códigos QR');
+        }
+    }
+
     async createQRForTransaction(transactionData) {
         try {
             const existingQR = await QRCode.findOne({

@@ -3,9 +3,12 @@ import QRCode from 'qrcode';
 class QRGenerator {
     async generateTransactionQR(transactionData) {
         try {
+            const transactionId = transactionData.transaction_id ?? transactionData.id_transaction;
+            const userId = transactionData.user_id ?? transactionData.id_user;
+
             const qrPayload = {
-                transaction_id: transactionData.id_transaction,
-                user_id: transactionData.id_user,
+                transaction_id: transactionId,
+                user_id: userId,
                 type: transactionData.type,
                 total: transactionData.total,
                 date: transactionData.date,
