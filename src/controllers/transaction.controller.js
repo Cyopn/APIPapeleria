@@ -20,9 +20,29 @@ export const listTransactions = async (req, res, next) => {
     }
 };
 
+export const listTransactionsByUser = async (req, res, next) => {
+    try {
+        const { id_user } = req.params;
+        const transactions = await transactionService.findAllByUserId(id_user);
+        res.json(transactions);
+    } catch (err) {
+        next(err);
+    }
+};
+
 export const listTransactionsDetails = async (req, res, next) => {
     try {
         const transactions = await transactionService.findAllDetails();
+        res.json(transactions);
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const listTransactionsDetailsByUser = async (req, res, next) => {
+    try {
+        const { id_user } = req.params;
+        const transactions = await transactionService.findAllDetailsByUserId(id_user);
         res.json(transactions);
     } catch (err) {
         next(err);
@@ -44,6 +64,27 @@ export const updateTransaction = async (req, res, next) => {
         const { id } = req.params;
         const transaction = await transactionService.update(id, req.body);
         res.json(transaction);
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const completeTransaction = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const transaction = await transactionService.complete(id);
+        res.json(transaction);
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const updateTransactionFilesStatus = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const status = req.body?.status;
+        const result = await transactionService.updateFilesStatus(id, status);
+        res.json(result);
     } catch (err) {
         next(err);
     }

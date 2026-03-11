@@ -25,6 +25,11 @@ const SpecialService = sequelize.define("special_service", {
         type: DataTypes.TEXT,
         allowNull: true
     },
+    status: {
+        type: DataTypes.ENUM("pending", "in_progress", "completed"),
+        allowNull: false,
+        defaultValue: "pending",
+    }
 }, {
     tableName: "special_service",
     timestamps: true,

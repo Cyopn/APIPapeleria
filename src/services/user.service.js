@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { Op } from "sequelize";
 import env from "../config/env.js";
 import User from "../models/user.model.js";
 import File from "../models/file.model.js";
@@ -80,9 +81,19 @@ class UserService {
         return { message: 'Usuario eliminado' };
     }
 
-    async login({ username, password }, baseUrl = "") {
+    async login({ identifier, username, email, password }, baseUrl = "") {
+        const loginIdentifier = (identifier || username || email || "").trim();
+        if (!loginIdentifier) {
+            throw new Error("Debes enviar username o email para iniciar sesión");
+        }
+
         const user = await User.findOne({
-            where: { username },
+            where: {
+                [Op.or]: [
+                    { username: loginIdentifier },
+                    { email: loginIdentifier }
+                ]
+            },
             include: [this.getAvatarInclude()]
         });
         if (!user) throw new Error("Usuario no encontrado");

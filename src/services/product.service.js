@@ -11,6 +11,8 @@ import SpecialServicePhoto from "../models/sp_service.photo.model.js";
 import DetailTransaction from "../models/detail_transaction.model.js";
 import sequelize from "../config/db.js";
 
+const SPECIAL_SERVICE_STATUSES = ['pending', 'in_progress', 'completed'];
+
 class ProductService {
     async create({ type, description, price, filename, filehash, id_file = null, id_files = null, name, category, type_print, type_paper, paper_size, range, both_sides, print_amount, observations, status, mode, service_type, delivery, id_print, cover_type, cover_color, spiral_type, document_type, binding_type, photo_size, paper_type }) {
         const t = await sequelize.transaction();
@@ -44,7 +46,18 @@ class ProductService {
                 return { id_product: product.id_product, type_print: print.print_type, type_paper: print.paper_type, status: print.status, type: product.type, description: product.description, price: product.price }
             } else {
                 const product = await Product.create({ type: type, description: description, price: price, id_file, id_files }, { transaction: t });
-                const sp_services = await SpecialService.create({ id_special_service: product.id_product, type: service_type, mode: mode, delivery: delivery, observations: observations }, { transaction: t });
+                if (typeof status !== 'undefined' && !SPECIAL_SERVICE_STATUSES.includes(status)) {
+                    throw new Error("Status inválido para special_service. Valores permitidos: pending, in_progress, completed");
+                }
+
+                await SpecialService.create({
+                    id_special_service: product.id_product,
+                    type: service_type,
+                    mode: mode,
+                    delivery: delivery,
+                    observations: observations,
+                    status: typeof status !== 'undefined' ? status : undefined
+                }, { transaction: t });
                 if (mode === "online") {
                     let linkedPrintId = id_print;
                     if (!linkedPrintId) {
@@ -109,7 +122,6 @@ class ProductService {
                         p.dataValues.files = [];
                     }
 
-                    // Añadir también el archivo único referenciado por `id_file`
                     try {
                         const singleId = p.id_file ?? (p.dataValues && p.dataValues.id_file) ?? null;
                         const singleNum = singleId !== null ? Number(singleId) : null;
@@ -312,6 +324,12 @@ class ProductService {
                 const ssUpdates = {};
                 if (typeof payload.service_type !== 'undefined') ssUpdates.type = payload.service_type;
                 if (typeof payload.mode !== 'undefined') ssUpdates.mode = payload.mode;
+                if (typeof payload.status !== 'undefined') {
+                    if (!SPECIAL_SERVICE_STATUSES.includes(payload.status)) {
+                        throw new Error("Status inválido para special_service. Valores permitidos: pending, in_progress, completed");
+                    }
+                    ssUpdates.status = payload.status;
+                }
                 if (Object.keys(ssUpdates).length) await SpecialService.update(ssUpdates, { where: { id_special_service: id }, transaction: t });
 
                 if (typeof payload.id_print !== 'undefined') {
@@ -383,6 +401,37 @@ class ProductService {
 
             await t.commit();
             return { message: 'Producto eliminado' };
+        } catch (err) {
+            await t.rollback();
+            throw err;
+        }
+    }
+
+    async updateSpecialServiceStatus(id, status) {
+        if (!SPECIAL_SERVICE_STATUSES.includes(status)) {
+            throw new Error("Status inválido para special_service. Valores permitidos: pending, in_progress, completed");
+        }
+
+        const t = await sequelize.transaction();
+        try {
+            const product = await Product.findByPk(id, { transaction: t });
+            if (!product) throw new Error("El producto no existe");
+            if (product.type !== 'special_service') {
+                throw new Error("El producto no es de tipo special_service");
+            }
+
+            const [updatedRows] = await SpecialService.update(
+                { status },
+                { where: { id_special_service: id }, transaction: t }
+            );
+
+            if (!updatedRows) {
+                throw new Error("No se encontró el detalle special_service para el producto");
+            }
+
+            await t.commit();
+
+            return this.findOne(id);
         } catch (err) {
             await t.rollback();
             throw err;

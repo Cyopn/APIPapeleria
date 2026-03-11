@@ -61,6 +61,17 @@ export const deleteProduct = async (req, res, next) => {
     }
 };
 
+export const updateSpecialServiceStatus = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const status = req.body?.status;
+        const product = await productService.updateSpecialServiceStatus(id, status);
+        res.json(product);
+    } catch (err) {
+        next(err);
+    }
+};
+
 function normalizeProductPayload(body = {}) {
     const p = Object.assign({}, body);
     if (typeof p.typePrint !== 'undefined' && typeof p.type_print === 'undefined') p.type_print = p.typePrint;
