@@ -8,6 +8,7 @@ import printingPriceRoutes from "./printing_price.route.js";
 import qrCodeRoutes from "./qr_code.route.js";
 import printerRoutes from "./printer.route.js";
 import printRoutes from "./print.route.js";
+import notificationRoutes from "./notification.route.js";
 
 
 const router = Router();
@@ -21,5 +22,6 @@ router.use("/printing-price", printingPriceRoutes);
 router.use("/qr-codes", qrCodeRoutes);
 router.use("/printers", printerRoutes);
 router.use("/prints", printRoutes);
+router.use("/notifications", notificationRoutes);
 
 export default router;

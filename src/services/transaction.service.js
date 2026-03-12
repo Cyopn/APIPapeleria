@@ -466,7 +466,8 @@ class TransactionService {
                     if (print.status === 'completed') continue;
                     await notificationService.create({
                         type: 'print_status_changed',
-                        message: `El status del print ${print.id_print} cambió de ${print.status} a completed`,
+                        message: `El estado de la impresión ${print.id_print} ha sido actualizado`,
+                        id_user: transaction.id_user,
                         metadata: {
                             id_print: print.id_print,
                             previous_status: print.status,
@@ -476,6 +477,18 @@ class TransactionService {
                     }, { transaction: t });
                 }
             }
+
+            await notificationService.create({
+                type: 'transaction_updated',
+                message: `La transacción ${transaction.id_transaction} ha sido completada`,
+                id_user: transaction.id_user,
+                metadata: {
+                    id_transaction: transaction.id_transaction,
+                    changed_fields: ['status'],
+                    previous_status: 'pending',
+                    new_status: 'completed'
+                }
+            }, { transaction: t });
 
             await t.commit();
 

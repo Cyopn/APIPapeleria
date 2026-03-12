@@ -14,6 +14,7 @@ import DetailTransaction from "./detail_transaction.model.js";
 import File from "./file.model.js";
 import QRCode from "./qr_code.model.js";
 import Printer from "./printer.model.js";
+import Notification from "./notification.model.js";
 
 Product.hasOne(Item, {
     foreignKey: "id_item",
@@ -135,6 +136,16 @@ User.hasMany(File, {
     as: "file"
 });
 
+User.hasMany(Notification, {
+    foreignKey: "id_user",
+    as: "notifications"
+});
+
+Notification.belongsTo(User, {
+    foreignKey: "id_user",
+    as: "user"
+});
+
 File.belongsTo(User, {
     foreignKey: "id_user",
     as: "user"
@@ -176,7 +187,8 @@ const db = {
     Transaction,
     DetailTransaction,
     File,
-    QRCode
+    QRCode,
+    Notification
 };
 
 export default db;

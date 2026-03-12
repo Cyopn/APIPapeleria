@@ -9,12 +9,62 @@ import SpecialServiceSpiral from "../models/sp_service.spiral.model.js";
 import SpecialServiceDocument from "../models/sp_service.document.model.js";
 import SpecialServicePhoto from "../models/sp_service.photo.model.js";
 import DetailTransaction from "../models/detail_transaction.model.js";
+import Transaction from "../models/transaction.model.js";
 import sequelize from "../config/db.js";
 import notificationService from "./notification.service.js";
 
 const SPECIAL_SERVICE_STATUSES = ['pending', 'in_progress', 'completed'];
 
 class ProductService {
+    async getRelatedUserIdsForProduct(id_product, transaction) {
+        const details = await DetailTransaction.findAll({
+            where: { id_product },
+            include: [{
+                model: Transaction,
+                as: "transaction",
+                attributes: ["id_user"]
+            }],
+            transaction
+        });
+
+        return [...new Set(
+            details
+                .map(detail => detail.transaction?.id_user)
+                .filter(id_user => id_user !== null && typeof id_user !== "undefined")
+        )];
+    }
+
+    async notifySpecialServiceStatusChange({ id_special_service, previous_status, new_status, transaction }) {
+        const relatedUserIds = await this.getRelatedUserIdsForProduct(id_special_service, transaction);
+
+        if (!relatedUserIds.length) {
+            await notificationService.create({
+                type: 'special_service_status_changed',
+                message: `El servicio especial ${id_special_service} cambió de estado`,
+                metadata: {
+                    id_special_service,
+                    previous_status,
+                    new_status,
+                    related_user_ids: []
+                }
+            }, { transaction });
+            return;
+        }
+
+        for (const id_user of relatedUserIds) {
+            await notificationService.create({
+                type: 'special_service_status_changed',
+                message: `El servicio especial ${id_special_service} cambió de estado`,
+                id_user,
+                metadata: {
+                    id_special_service,
+                    previous_status,
+                    new_status
+                }
+            }, { transaction });
+        }
+    }
+
     async create({ type, description, price, filename, filehash, id_file = null, id_files = null, name, category, type_print, type_paper, paper_size, range, both_sides, print_amount, observations, status, mode, service_type, delivery, id_print, cover_type, cover_color, spiral_type, document_type, binding_type, photo_size, paper_type }) {
         const t = await sequelize.transaction();
         try {
@@ -398,7 +448,7 @@ class ProductService {
             if (printStatusChange) {
                 await notificationService.create({
                     type: 'print_status_changed',
-                    message: `El status del print ${id} cambió de ${printStatusChange.previous_status} a ${printStatusChange.new_status}`,
+                    message: `El estado de la impresión ${id} cambió de ${printStatusChange.previous_status} a ${printStatusChange.new_status}`,
                     metadata: {
                         id_print: id,
                         previous_status: printStatusChange.previous_status,
@@ -408,15 +458,12 @@ class ProductService {
             }
 
             if (specialServiceStatusChange) {
-                await notificationService.create({
-                    type: 'special_service_status_changed',
-                    message: `El status del special_service ${id} cambió de ${specialServiceStatusChange.previous_status} a ${specialServiceStatusChange.new_status}`,
-                    metadata: {
-                        id_special_service: id,
-                        previous_status: specialServiceStatusChange.previous_status,
-                        new_status: specialServiceStatusChange.new_status
-                    }
-                }, { transaction: t });
+                await this.notifySpecialServiceStatusChange({
+                    id_special_service: id,
+                    previous_status: specialServiceStatusChange.previous_status,
+                    new_status: specialServiceStatusChange.new_status,
+                    transaction: t
+                });
             }
 
             await t.commit();
@@ -479,15 +526,12 @@ class ProductService {
             }
 
             if (currentSpecialService.status !== status) {
-                await notificationService.create({
-                    type: 'special_service_status_changed',
-                    message: `El status del special_service ${id} cambió de ${currentSpecialService.status} a ${status}`,
-                    metadata: {
-                        id_special_service: id,
-                        previous_status: currentSpecialService.status,
-                        new_status: status
-                    }
-                }, { transaction: t });
+                await this.notifySpecialServiceStatusChange({
+                    id_special_service: id,
+                    previous_status: currentSpecialService.status,
+                    new_status: status,
+                    transaction: t
+                });
             }
 
             await t.commit();
